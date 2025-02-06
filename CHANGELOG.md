@@ -1,3 +1,113 @@
+## [1.7.15](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc16...1.7.15) (2025-02-06)
+
+
+
+## [1.7.14](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.13...1.7.14) (2024-12-04)
+
+
+
+## [1.7.13](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.12...1.7.13) (2024-11-04)
+
+
+
+## [1.7.12](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.11...1.7.12) (2024-07-26)
+
+
+
+## [1.7.11](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.10...1.7.11) (2024-06-06)
+
+
+
+## [1.7.10](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.9...1.7.10) (2024-04-10)
+
+
+
+## [1.7.9](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.8...1.7.9) (2024-04-09)
+
+
+
+## [1.7.8](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.7...1.7.8) (2024-04-08)
+
+
+
+## [1.7.7](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.6...1.7.7) (2024-03-08)
+
+
+
+## [1.7.6](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.5...1.7.6) (2024-02-20)
+
+
+
+## [1.7.5](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.4...1.7.5) (2024-02-15)
+
+
+
+## [1.7.4](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.3...1.7.4) (2024-02-12)
+
+
+
+## [1.7.3](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.2...1.7.3) (2024-01-19)
+
+
+
+## [1.7.2](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.1...1.7.2) (2024-01-13)
+
+
+### Bug Fixes
+
+* added retry on fail to get governance body data ([407fbc7](https://github.com/Chia-Network/Core-Registry-CADT/commit/407fbc756f0f1bf5fdd04bd47d813676c3c677f9))
+* create org bugs ([82ffe4a](https://github.com/Chia-Network/Core-Registry-CADT/commit/82ffe4a244bf2fafbda2399a196f52bcf078e29b))
+* default sync task ending before governance data available ([e4ef17a](https://github.com/Chia-Network/Core-Registry-CADT/commit/e4ef17abe2bbad88c5b83f36f08733827374d569))
+* duplicated definitions ([936ff0a](https://github.com/Chia-Network/Core-Registry-CADT/commit/936ff0a761db5a852011d15778f0bab1cca34ba2))
+* home org synced calculation ([1c738f7](https://github.com/Chia-Network/Core-Registry-CADT/commit/1c738f71b3f3e82b81f25da3c3129e38cce7ab01))
+* invalid promise resolve function ([19bd7c3](https://github.com/Chia-Network/Core-Registry-CADT/commit/19bd7c3ea3f5dfde10093fabeabf93f8b3158f57))
+* log levels ([17da16a](https://github.com/Chia-Network/Core-Registry-CADT/commit/17da16ab496c920c3d2c785f5414b0f39738ce02))
+* store sync status function ([92b4f1f](https://github.com/Chia-Network/Core-Registry-CADT/commit/92b4f1f68699c9bb6fd983957e715939aabc4053))
+* subscribe to org ([4c16a89](https://github.com/Chia-Network/Core-Registry-CADT/commit/4c16a89fb775d982bdefc473590bace5d641babc))
+* subscribe to organization ([55698a2](https://github.com/Chia-Network/Core-Registry-CADT/commit/55698a29e13919aacf192dcd6c545c558b82e0ae))
+* tokenized units query ([1dc1a37](https://github.com/Chia-Network/Core-Registry-CADT/commit/1dc1a372f5d7111995776d23eaf36a6aebcc94b7))
+* unsubscribe bugs ([3434f1d](https://github.com/Chia-Network/Core-Registry-CADT/commit/3434f1dfa4370e030946bd9c4179fdeabde19bb4))
+
+
+### Features
+
+* add apple ARM package target ([a3d733b](https://github.com/Chia-Network/Core-Registry-CADT/commit/a3d733b1c43873f5d1ee793aca914ab40ca98212))
+* add controller for address book ([9c3915a](https://github.com/Chia-Network/Core-Registry-CADT/commit/9c3915aa11a3e5a7b04c00700bcbecd4119876ae))
+* add findAll for addressbook module ([845638e](https://github.com/Chia-Network/Core-Registry-CADT/commit/845638e7c17478d82c0885189f917f346747dc68))
+* add findOne func and update order ([b579403](https://github.com/Chia-Network/Core-Registry-CADT/commit/b5794036ad931b912b20e27289b56bb035c3c7bf))
+* add migration for address book ([c5f7230](https://github.com/Chia-Network/Core-Registry-CADT/commit/c5f7230641890c7d547d2e2f6ffbc20e61d5ab07))
+* add models for address book ([6aaae53](https://github.com/Chia-Network/Core-Registry-CADT/commit/6aaae53b59934dab21da00068c8b43ff83ac62a3))
+* add routes for address book ([fc52ce4](https://github.com/Chia-Network/Core-Registry-CADT/commit/fc52ce482a4154eca661621540188e88219888a7))
+* added datamodel version storeid and hash to organization table ([3d74eb1](https://github.com/Chia-Network/Core-Registry-CADT/commit/3d74eb1ad43610f10b5c1b7ad3ad9e129e5af01b))
+* enable sqlite WAL mode ([31dbde9](https://github.com/Chia-Network/Core-Registry-CADT/commit/31dbde9959b8df4bb08cba9726a46baa0e0d14cc))
+* minor tweaks ([e989ba7](https://github.com/Chia-Network/Core-Registry-CADT/commit/e989ba75a7400aa4bfcc30df4eba4057df0a6c46))
+* option to wait to return subscribed store data until synced ([4a6b5a0](https://github.com/Chia-Network/Core-Registry-CADT/commit/4a6b5a0e5c7d63f923865f03d258f04ee3371428))
+* option to wait to return subscribed store data until synced ([2f4d24c](https://github.com/Chia-Network/Core-Registry-CADT/commit/2f4d24c76055703bdd7281fea0c9f19a2e3512f6))
+* option to wait to return subscribed store data until synced ([be7df5b](https://github.com/Chia-Network/Core-Registry-CADT/commit/be7df5bbcd45462b9f4a1c640ffe1fc8a4bace05))
+* revert migration ([551cbf9](https://github.com/Chia-Network/Core-Registry-CADT/commit/551cbf9653e914457567b07ce1ba8d0c57217ab5))
+
+
+
+## [1.7.15-rc4](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc3...1.7.15-rc4) (2024-12-18)
+
+
+
+## [1.7.15-rc3](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc2...1.7.15-rc3) (2024-12-18)
+
+
+### Bug Fixes
+
+* general bug fixes and improvements ([375b15a](https://github.com/Chia-Network/Core-Registry-CADT/commit/375b15ac5e54c70f95709da91b5e269e89811017))
+* vintage year not included in responses ([f747109](https://github.com/Chia-Network/Core-Registry-CADT/commit/f74710948fd77885b9ba25334c1d01ac358e0d9c))
+
+
+### Features
+
+* fixed incorrectly cached statistics result ([45613b4](https://github.com/Chia-Network/Core-Registry-CADT/commit/45613b44f867396cdcb753279d666bfe65bf03e1))
+* removed deprecated config file ([8653cd8](https://github.com/Chia-Network/Core-Registry-CADT/commit/8653cd8092b8b8dfa230e3012536e62299138df0))
+
+
+
 ## [1.7.14](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.13...1.7.14) (2024-12-04)
 
 
