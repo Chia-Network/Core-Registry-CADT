@@ -74,12 +74,19 @@ jobs:
           chia init
           chia keys generate -l "functional_tests"
           chia-tools network switch testneta
-          chia-tools config add-trusted-peer -y 54.214.229.33
+          chia-tools config add-trusted-peer -y 54.214.229.33 58444
 
       - name: Run tests
         shell: bash
         run: |
           chia start wallet data
-          sleep 60
-          cat ~/.chia/mainnet/log/debug.log
+          sleep 10
+          chia wallet show
+          sleep 10
+          chia wallet show
+          sleep 10
+          chia wallet show
+          sleep 10
+          chia peer -c wallet
           chia stop all -d
+          cat ~/.chia/mainnet/log/debug.log
