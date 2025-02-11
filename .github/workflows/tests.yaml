@@ -71,6 +71,7 @@ jobs:
       - name: Configure Chia
         shell: bash
         run: |
+          chia init
           chia-tools network switch testneta
           chia-tools config add-trusted-peer -y 54.214.229.33
 
