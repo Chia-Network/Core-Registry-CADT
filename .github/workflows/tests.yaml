@@ -4,13 +4,12 @@ on:
   push:
     branches:
       - main
-      - stage
   pull_request:
     branches:
       - '**'
 
 jobs:
-  test:
+  unit-tests:
     name: NPM Tests
     runs-on: ubuntu-latest
     container:
@@ -45,3 +44,40 @@ jobs:
 
       - name: npm tests
         run: npm run test
+
+  functional-tests:
+    name: Functional Tests
+    runs-on: ubuntu-latest
+    container:
+      image: node:20.16
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Chia and chia-tools
+        shell: bash
+        run: |
+          apt-get install ca-certificates curl gnupg
+
+          curl -sL https://repo.chia.net/FD39E6D3.pubkey.asc | sudo gpg --dearmor -o /usr/share/keyrings/chia.gpg
+
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/chia.gpg] https://repo.chia.net/debian/ stable main" | sudo tee /etc/apt/sources.list.d/chia.list > /dev/null
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/chia.gpg] https://repo.chia.net/chia-tools/debian/ stable main" | sudo tee /etc/apt/sources.list.d/chia-tools.list > /dev/null
+          apt-get update
+
+          apt-get install chia-blockchain chia-tools
+
+      - name: Configure Chia
+        shell: bash
+        run: |
+          chia-tools network switch testneta
+          chia-tools config add-trusted-peer -y 54.214.229.33
+
+      - name: Run tests
+        shell: bash
+        run: |
+          chia start wallet data
+          sleep 60
+          cat ~/.chia/mainnet/log/debug.log
+          chia stop all -d
