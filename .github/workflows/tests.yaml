@@ -58,7 +58,7 @@ jobs:
       - name: Install Chia and chia-tools
         shell: bash
         run: |
-          apt-get install -y ca-certificates curl gnupg
+          apt-get install -y ca-certificates curl gnupg jq
 
           curl -sL https://repo.chia.net/FD39E6D3.pubkey.asc | gpg --dearmor -o /usr/share/keyrings/chia.gpg
 
@@ -68,6 +68,9 @@ jobs:
 
           apt-get install -y chia-blockchain chia-tools
 
+      - name: Install pm2
+        run: npm install pm2@latest -g
+
       - name: Configure Chia
         shell: bash
         run: |
@@ -76,17 +79,27 @@ jobs:
           chia-tools network switch testneta
           chia-tools config add-trusted-peer -y 54.214.229.33 58444
 
-      - name: Run tests
+      - name: Configure CADT
         shell: bash
         run: |
-          chia start wallet data
-          sleep 10
-          chia wallet show
-          sleep 10
-          chia wallet show
-          sleep 10
-          chia wallet show
-          sleep 10
-          chia peer -c wallet
-          chia stop all -d
-          cat ~/.chia/mainnet/log/debug.log
+          # Run cadt momentarily to create config file
+          pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
+          sleep 5
+          pm2 stop core-registry-cadt
+
+          # Remove cadt database to reset system
+          rm -f ~/.chia/mainnet/core-registry/cadt/v1/data.sqlite3*
+
+          # Configure CADT to most verbose logs
+          yq -yi '.GENERAL.LOG_LEVEL = "trace"' ~/.chia/mainnet/core-registry/config.yaml
+
+      - name: Run tests
+        run: bash tests/functional-tests.sh
+
+      # - name: Remove all mirrors and subscriptions created in testing
+      #   shell: bash
+      #   run: |
+      #     chia-tools data delete-mirrors
+      #     chia-tools data unsub-all
+      #     echo "Waiting 120 seconds for mirrors and subscriptions to be removed..."
+      #     sleep 120
