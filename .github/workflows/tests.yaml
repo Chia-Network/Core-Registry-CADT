@@ -90,7 +90,8 @@ jobs:
         run: |
           # Run cadt momentarily to create config file
           pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
-          sleep 5
+          sleep 10
+          pm2 logs core-registry-cadt --nostream
           pm2 stop core-registry-cadt
 
           echo "Here's the mainnet directory"
