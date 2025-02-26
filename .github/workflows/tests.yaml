@@ -80,6 +80,11 @@ jobs:
           chia-tools network switch testneta
           chia-tools config add-trusted-peer -y 54.214.229.33 58444
 
+          echo "Here's the mainnet directory"
+          ls -la ~/.chia/mainnet
+          echo "current directory"
+          pwd
+
       - name: Configure CADT
         shell: bash
         run: |
@@ -87,6 +92,14 @@ jobs:
           pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
           sleep 5
           pm2 stop core-registry-cadt
+
+          echo "Here's the mainnet directory"
+          ls -la ~/.chia/mainnet
+          echo "current directory"
+          pwd
+
+          echo "The core-registry directory:"
+          ls -lah ~/.chia/mainnet/core-registry/
 
           # Remove cadt database to reset system
           rm -f ~/.chia/mainnet/core-registry/cadt/v1/data.sqlite3*
