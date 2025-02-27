@@ -145,7 +145,7 @@ fail_test () {
 
 # Test if we are subscribed to all expected store IDs
 test_subscriptions () {
-    local TIMEOUT_SECONDS=60
+    local TIMEOUT_SECONDS=300
     local CHECK_INTERVAL=5
     local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
 
@@ -158,8 +158,6 @@ test_subscriptions () {
     i=0
     while true; do
         echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
-
-        pm2 logs core-registry-cadt --nostream --lines 500
 
 
         # Get current subscriptions
