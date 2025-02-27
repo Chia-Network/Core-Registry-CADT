@@ -139,6 +139,7 @@ cleanup () {
 fail_test () {
     TEST_FAILED=1
     ERROR_MESSAGE="$1"
+    pm2 logs core-registry-cadt --nostream
     cleanup
 }
 
@@ -149,12 +150,18 @@ test_subscriptions () {
     local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
 
     echo "Testing DataLayer subscriptions... (this can take up to $TIMEOUT_SECONDS seconds)"
+    echo "[DEBUG] Will check every $CHECK_INTERVAL seconds, up to $MAX_ATTEMPTS times"
     #check_health_endpoint
 
     i=0
     while true; do
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+
         # Get current subscriptions
         current_subscriptions=$(chia rpc data_layer subscriptions | jq -r '.store_ids[]')
+        echo "[DEBUG] Current subscriptions response:"
+        echo "$current_subscriptions"
+
         missing_subs=0
         found_ids=()
         missing_ids=()
@@ -168,6 +175,8 @@ test_subscriptions () {
                 missing_subs=1
             fi
         done
+
+        echo "[DEBUG] Found ${#found_ids[@]} subscriptions, missing ${#missing_ids[@]} subscriptions"
 
         if [ $missing_subs -eq 0 ]; then
             echo -e "\n${GREEN}=========================================="
