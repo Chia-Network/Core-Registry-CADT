@@ -386,6 +386,50 @@ test_delete_home_org () {
     done
 }
 
+# Test 4: Add a unit
+test_add_unit () {
+    local UNITS_ENDPOINT="http://localhost:31310/v1/units"
+    local response
+    local unit_uuid
+
+    echo "Testing unit creation..."
+
+    # Create unit
+    echo "[DEBUG] Creating new unit..."
+    response=$(curl -s --location -g --request POST "$UNITS_ENDPOINT" \
+        --header 'Content-Type: application/json' \
+        --data-raw '{
+            "projectLocationId": "ID_USA",
+            "unitOwner": "Chia",
+            "countryJurisdictionOfOwner": "Andorra",
+            "vintageYear": 1998,
+            "unitType": "Removal - technical",
+            "unitStatus": "Held",
+            "unitBlockStart": "abc123",
+            "unitBlockEnd": "bcd456",
+            "unitCount": 200,
+            "unitRegistryLink": "http://climateWarehouse.com/myRegistry",
+            "correspondingAdjustmentDeclaration": "Unknown",
+            "correspondingAdjustmentStatus": "Not Started"
+        }')
+
+    echo "[DEBUG] Create unit response:"
+    echo "$response"
+
+    # Check if creation was successful
+    if ! echo "$response" | jq -e '.success == true' > /dev/null; then
+        fail_test "Failed to create unit: $(echo "$response" | jq -r '.message // "Unknown error"')"
+        return
+    }
+
+    # Store the UUID for potential future use
+    unit_uuid=$(echo "$response" | jq -r '.uuid')
+
+    echo -e "\n${GREEN}=========================================="
+    echo "✓ Unit successfully created with UUID: $unit_uuid - TEST PASSED"
+    echo "===========================================${NC}\n"
+}
+
 #~~~ Start Chia ~~~ #
 
 chia start wallet data
@@ -416,6 +460,9 @@ test_create_home_org
 
 # Test 3: Delete home organization
 test_delete_home_org
+
+# Test 4: Add a unit
+#test_add_unit
 
 # If we got here with no failures, run cleanup and exit successfully
 cleanup
