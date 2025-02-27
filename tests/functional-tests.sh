@@ -585,8 +585,8 @@ make_api_call() {
     while true; do
         response=$(eval "$1")
 
-        # Check if response contains the wallet not available error
-        if echo "$response" | jq -e '.error and .error | contains("Your wallet is not available")' > /dev/null; then
+        # First check if we got a response with the wallet error message
+        if echo "$response" | grep -q "Your wallet is not available"; then
             echo "[DEBUG] Wallet not available, checking sync status..."
             if ! is_wallet_synced; then
                 return 1
