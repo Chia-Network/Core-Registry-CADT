@@ -153,12 +153,14 @@ test_subscriptions () {
     echo "[DEBUG] Will check every $CHECK_INTERVAL seconds, up to $MAX_ATTEMPTS times"
     #check_health_endpoint
 
-    pm2 logs core-registry-cadt --nostream --lines 500
 
 
     i=0
     while true; do
         echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+
+        pm2 logs core-registry-cadt --nostream --lines 500
+
 
         # Get current subscriptions
         current_subscriptions=$(chia rpc data_layer subscriptions | jq -r '.store_ids[]')
