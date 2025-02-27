@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Exit on error
+set -e
+# Exit on undefined variable
+set -u
+# Exit if any command in a pipe fails
+set -o pipefail
+
 ### Variables
 
 # Color codes
@@ -50,7 +57,7 @@ check_mirrors_removed () {
             total_mirrors=$((total_mirrors + mirror_count))
         done
 
-        if [ "$total_mirrors" -eq 0 ]; then
+        if (( total_mirrors == 0 )); then
             echo -e "${GREEN}●${NC} No mirrors owned by us found - proceeding"
             break
         fi
@@ -72,7 +79,7 @@ check_health_endpoint () {
     while true; do
         response=$(curl -s http://127.0.0.1:31310/heath | jq -r '.message')
 
-        if [ "$response" = "OK" ]; then
+        if [[ "$response" == "OK" ]]; then
             echo "Health endpoint responding OK - proceeding"
             break
         fi
@@ -94,7 +101,7 @@ check_unsubscribed () {
     while true; do
         subscription_count=$(chia rpc data_layer subscriptions | jq '.store_ids | length')
 
-        if [ "$subscription_count" -eq 0 ]; then
+        if (( subscription_count == 0 )); then
             echo -e "${GREEN}●${NC} Successfully unsubscribed from all stores"
             break
         fi
@@ -129,7 +136,7 @@ cleanup () {
     chia stop all -d
 
     # If there was a test failure, output error and exit with error code
-    if [ $TEST_FAILED -eq 1 ]; then
+    if (( TEST_FAILED == 1 )); then
         echo -e "\n${RED}Test failed: $ERROR_MESSAGE${NC}\n"
         exit 1
     fi
@@ -181,7 +188,7 @@ test_subscriptions () {
 
         echo "[DEBUG] Found ${#found_ids[@]} subscriptions, missing ${#missing_ids[@]} subscriptions"
 
-        if [ $missing_subs -eq 0 ]; then
+        if (( missing_subs == 0 )); then
             echo -e "\n${GREEN}=========================================="
             echo "✓ All expected subscriptions found - TEST PASSED"
             echo "===========================================${NC}\n"
@@ -218,11 +225,11 @@ check_home_org () {
     # Get organizations and store response
     response=$(curl -s --location --request GET "$ENDPOINT" --header 'Content-Type: application/json')
 
-    if [ $? -ne 0 ]; then
+    if [[ $? -ne 0 ]]; then
         echo "[DEBUG] curl request failed"
         fail_test "Failed to fetch organizations from $ENDPOINT"
         return 1
-    }
+    fi
 
     echo "[DEBUG] Organizations response:"
     echo "$response"
@@ -230,7 +237,7 @@ check_home_org () {
     # Count organizations with isHome=true
     home_orgs=$(echo "$response" | jq '[.[] | select(.isHome == true)] | length')
 
-    if [ "$home_orgs" -eq 0 ]; then
+    if (( home_orgs == 0 )); then
         echo -e "${GREEN}●${NC} No home organizations found"
         return 0
     else
@@ -275,7 +282,7 @@ test_create_home_org () {
     if ! echo "$response" | jq -e '.success == true' > /dev/null; then
         fail_test "Failed to create organization: $(echo "$response" | jq -r '.message // "Unknown error"')"
         return
-    }
+    fi
 
     # Store the orgUid
     org_uid=$(echo "$response" | jq -r '.orgUid')
@@ -310,7 +317,7 @@ test_create_home_org () {
         fi
 
         echo -e "${RED}●${NC} Organization not yet set as home org - checking again in $CHECK_INTERVAL seconds"
-        sleep $CHECK_INTERVAL
+        sleep "$CHECK_INTERVAL"
         ((i++))
     done
 }
@@ -333,7 +340,7 @@ test_delete_home_org () {
     # Find any home org that exists
     org_uid=$(echo "$response" | jq -r 'to_entries[] | select(.value.isHome == true) | .key')
 
-    if [ -z "$org_uid" ]; then
+    if [[ -z "$org_uid" ]]; then
         fail_test "No home organization found to delete"
         return
     fi
@@ -381,7 +388,7 @@ test_delete_home_org () {
         fi
 
         echo -e "${RED}●${NC} Organization still exists - checking again in $CHECK_INTERVAL seconds"
-        sleep $CHECK_INTERVAL
+        sleep "$CHECK_INTERVAL"
         ((i++))
     done
 }
@@ -420,7 +427,7 @@ test_add_unit () {
     if ! echo "$response" | jq -e '.success == true' > /dev/null; then
         fail_test "Failed to create unit: $(echo "$response" | jq -r '.message // "Unknown error"')"
         return
-    }
+    fi
 
     # Store the UUID for potential future use
     unit_uuid=$(echo "$response" | jq -r '.uuid')
