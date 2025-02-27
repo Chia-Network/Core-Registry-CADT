@@ -256,7 +256,7 @@ test_create_home_org () {
     if ! check_home_org; then
         fail_test "Found existing home organization when none should exist"
         return
-    }
+    fi
 
     # Create home organization
     echo "[DEBUG] Creating home organization..."
@@ -336,7 +336,7 @@ test_delete_home_org () {
     if [ -z "$org_uid" ]; then
         fail_test "No home organization found to delete"
         return
-    }
+    fi
 
     echo "[DEBUG] Found home organization with UID: $org_uid"
 
@@ -351,7 +351,7 @@ test_delete_home_org () {
     if ! echo "$response" | jq -e '.success == true' > /dev/null; then
         fail_test "Failed to delete organization: $(echo "$response" | jq -r '.message // "Unknown error"')"
         return
-    }
+    fi
 
     # Verify organization is actually deleted
     echo "Verifying organization deletion..."
