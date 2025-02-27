@@ -215,6 +215,12 @@ sleep 5
 # call function to check if wallet it synced
 is_wallet_synced
 
+chia wallet show
+
+chia data get_subscriptions
+
+
+
 # start core-registry-cadt in the background
 pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
 
