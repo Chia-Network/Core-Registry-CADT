@@ -207,6 +207,185 @@ test_subscriptions () {
     done
 }
 
+# Check if any home organizations exist
+check_home_org () {
+    local ENDPOINT="http://localhost:31310/v1/organizations"
+    local response
+    local home_orgs
+
+    echo "[DEBUG] Checking for home organizations..."
+
+    # Get organizations and store response
+    response=$(curl -s --location --request GET "$ENDPOINT" --header 'Content-Type: application/json')
+
+    if [ $? -ne 0 ]; then
+        echo "[DEBUG] curl request failed"
+        fail_test "Failed to fetch organizations from $ENDPOINT"
+        return 1
+    }
+
+    echo "[DEBUG] Organizations response:"
+    echo "$response"
+
+    # Count organizations with isHome=true
+    home_orgs=$(echo "$response" | jq '[.[] | select(.isHome == true)] | length')
+
+    if [ "$home_orgs" -eq 0 ]; then
+        echo -e "${GREEN}●${NC} No home organizations found"
+        return 0
+    else
+        echo -e "${RED}●${NC} Found $home_orgs home organization(s)"
+        # Get the orgUids of home orgs for debugging
+        echo "[DEBUG] Home organization UIDs:"
+        echo "$response" | jq -r '.[] | select(.isHome == true) | .orgUid'
+        return 1
+    fi
+}
+
+# Test 2: Create a home organization
+test_create_home_org () {
+    local TIMEOUT_SECONDS=1800  # 30 minutes
+    local CHECK_INTERVAL=30
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
+    local CREATE_ENDPOINT="http://localhost:31310/v1/organizations/create"
+    local org_uid
+
+    echo "Testing home organization creation... (this can take up to 30 minutes)"
+
+    # First verify no home org exists
+    if ! check_home_org; then
+        fail_test "Found existing home organization when none should exist"
+        return
+    }
+
+    # Create home organization
+    echo "[DEBUG] Creating home organization..."
+    local response
+    response=$(curl -s --location -g --request POST "$CREATE_ENDPOINT" \
+        --header 'Content-Type: application/json' \
+        --data-raw '{
+            "name": "Automated Testing Org",
+            "icon": "https://www.chia.net/wp-content/uploads/2023/01/chia-logo-dark.svg"
+        }')
+
+    echo "[DEBUG] Create organization response:"
+    echo "$response"
+
+    # Check if creation was successful
+    if ! echo "$response" | jq -e '.success == true' > /dev/null; then
+        fail_test "Failed to create organization: $(echo "$response" | jq -r '.message // "Unknown error"')"
+        return
+    }
+
+    # Store the orgUid
+    org_uid=$(echo "$response" | jq -r '.orgUid')
+    echo "[DEBUG] Organization created with UID: $org_uid"
+
+    # Wait for organization to be set as home org
+    echo "Waiting for organization to be set as home organization..."
+    i=0
+    while true; do
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+
+        # Get current organizations
+        response=$(curl -s --location --request GET 'http://localhost:31310/v1/organizations' \
+            --header 'Content-Type: application/json')
+
+        # Check if our org exists and is home org
+        if echo "$response" | jq -e --arg uid "$org_uid" \
+            '.[$uid] and .[$uid].isHome == true' > /dev/null; then
+            echo -e "\n${GREEN}=========================================="
+            echo "✓ Home organization successfully created and verified - TEST PASSED"
+            echo "===========================================${NC}\n"
+            break
+        fi
+
+        if (( $i >= $MAX_ATTEMPTS )); then
+            echo -e "\n${RED}Organization creation results after $TIMEOUT_SECONDS seconds:${NC}"
+            echo "Expected orgUid: $org_uid"
+            echo "Current organizations state:"
+            echo "$response" | jq '.'
+            fail_test "Organization creation verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+            return
+        fi
+
+        echo -e "${RED}●${NC} Organization not yet set as home org - checking again in $CHECK_INTERVAL seconds"
+        sleep $CHECK_INTERVAL
+        ((i++))
+    done
+}
+
+# Test 3: Delete home organization
+test_delete_home_org () {
+    local TIMEOUT_SECONDS=300
+    local CHECK_INTERVAL=15
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
+    local DELETE_ENDPOINT="http://localhost:31310/v1/organizations"
+    local response
+    local org_uid
+
+    echo "Testing home organization deletion... (this can take up to 5 minutes)"
+
+    # First get the current home org UID
+    response=$(curl -s --location --request GET "$DELETE_ENDPOINT" \
+        --header 'Content-Type: application/json')
+
+    # Find any home org that exists
+    org_uid=$(echo "$response" | jq -r 'to_entries[] | select(.value.isHome == true) | .key')
+
+    if [ -z "$org_uid" ]; then
+        fail_test "No home organization found to delete"
+        return
+    }
+
+    echo "[DEBUG] Found home organization with UID: $org_uid"
+
+    # Delete the home organization
+    echo "[DEBUG] Deleting home organization..."
+    response=$(curl -s --location --request DELETE "$DELETE_ENDPOINT/$org_uid")
+
+    echo "[DEBUG] Delete organization response:"
+    echo "$response"
+
+    # Check if deletion was successful
+    if ! echo "$response" | jq -e '.success == true' > /dev/null; then
+        fail_test "Failed to delete organization: $(echo "$response" | jq -r '.message // "Unknown error"')"
+        return
+    }
+
+    # Verify organization is actually deleted
+    echo "Verifying organization deletion..."
+    i=0
+    while true; do
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+
+        # Get current organizations
+        response=$(curl -s --location --request GET "$DELETE_ENDPOINT" \
+            --header 'Content-Type: application/json')
+
+        # Check if any home orgs exist
+        if echo "$response" | jq -e 'to_entries[] | select(.value.isHome == true) | length == 0' > /dev/null; then
+            echo -e "\n${GREEN}=========================================="
+            echo "✓ Home organization successfully deleted and verified - TEST PASSED"
+            echo "===========================================${NC}\n"
+            break
+        fi
+
+        if (( $i >= $MAX_ATTEMPTS )); then
+            echo -e "\n${RED}Organization deletion results after $TIMEOUT_SECONDS seconds:${NC}"
+            echo "Attempted to delete orgUid: $org_uid"
+            echo "Current organizations state:"
+            echo "$response" | jq '.'
+            fail_test "Organization deletion verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+            return
+        fi
+
+        echo -e "${RED}●${NC} Organization still exists - checking again in $CHECK_INTERVAL seconds"
+        sleep $CHECK_INTERVAL
+        ((i++))
+    done
+}
+
 #~~~ Start Chia ~~~ #
 
 chia start wallet data
@@ -231,6 +410,12 @@ pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
 
 # Test 1: Verify that we are subscribed to all required DataLayer stores
 test_subscriptions
+
+# Test 2: Create a home organization
+test_create_home_org
+
+# Test 3: Delete home organization
+test_delete_home_org
 
 # If we got here with no failures, run cleanup and exit successfully
 cleanup
