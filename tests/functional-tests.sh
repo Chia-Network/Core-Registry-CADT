@@ -224,8 +224,7 @@ check_home_org () {
     echo "[DEBUG] Checking for home organizations..."
 
     # Get organizations and store response
-    response=$(curl -s --location --request GET "$ENDPOINT" --header 'Content-Type: application/json')
-
+    response=$(make_api_call "curl -s --location --request GET '$ENDPOINT' --header 'Content-Type: application/json'")
     if [[ $? -ne 0 ]]; then
         echo "[DEBUG] curl request failed"
         fail_test "Failed to fetch organizations from $ENDPOINT"
@@ -274,12 +273,12 @@ test_create_home_org () {
     # Create home organization
     echo "[DEBUG] Creating home organization..."
     local response
-    response=$(curl -s --location -g --request POST "$CREATE_ENDPOINT" \
+    response=$(make_api_call "curl -s --location -g --request POST '$CREATE_ENDPOINT' \
         --header 'Content-Type: application/json' \
         --data-raw '{
-            "name": "Automated Testing Org",
-            "icon": "https://www.chia.net/wp-content/uploads/2023/01/chia-logo-dark.svg"
-        }')
+            \"name\": \"Automated Testing Org\",
+            \"icon\": \"https://www.chia.net/wp-content/uploads/2023/01/chia-logo-dark.svg\"
+        }'")
 
     echo "[DEBUG] Create organization response:"
     echo "$response"
@@ -301,8 +300,12 @@ test_create_home_org () {
         echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
 
         # Get current organizations
-        response=$(curl -s --location --request GET 'http://localhost:31310/v1/organizations' \
-            --header 'Content-Type: application/json')
+        response=$(make_api_call "curl -s --location --request GET 'http://localhost:31310/v1/organizations' \
+            --header 'Content-Type: application/json'")
+        if [[ $? -ne 0 ]]; then
+            fail_test "Failed to get organizations"
+            return
+        fi
 
         # Check if our org exists and is home org
         if echo "$response" | jq -e --arg uid "$org_uid" \
@@ -347,46 +350,46 @@ test_create_project () {
 
     # Create project
     echo "[DEBUG] Creating new project..."
-    response=$(curl -s --location -g --request POST "$PROJECTS_ENDPOINT" \
+    response=$(make_api_call "curl -s --location -g --request POST '$PROJECTS_ENDPOINT' \
         --header 'Content-Type: application/json' \
         --data-raw '{
-            "projectName": "Automated Testing Project",
-            "projectId": "ATP1",
-            "projectDeveloper": "functional-tests.sh",
-            "program": null,
-            "projectLink": "https://observer.climateactiondata.org/",
-            "sector": "Agriculture; forestry and fishing",
-            "projectType": "Agriculture, Forestry and other land use (AFOLU)",
-            "projectStatus": "Completed",
-            "projectStatusDate": "2025-01-28T05:00:00.000Z",
-            "coveredByNDC": "Outside NDC",
-            "ndcInformation": null,
-            "currentRegistry": "American Carbon Registry (ACR)",
-            "registryOfOrigin": "American Carbon Registry (ACR)",
-            "originProjectId": "ATP1",
-            "unitMetric": "tCO2e",
-            "methodology": "ACR - Afforestation and Reforestation of Degraded Lands",
-            "validationBody": null,
-            "validationDate": null,
-            "projectTags": null,
-            "issuances": [
+            \"projectName\": \"Automated Testing Project\",
+            \"projectId\": \"ATP1\",
+            \"projectDeveloper\": \"functional-tests.sh\",
+            \"program\": null,
+            \"projectLink\": \"https://observer.climateactiondata.org/\",
+            \"sector\": \"Agriculture; forestry and fishing\",
+            \"projectType\": \"Agriculture, Forestry and other land use (AFOLU)\",
+            \"projectStatus\": \"Completed\",
+            \"projectStatusDate\": \"2025-01-28T05:00:00.000Z\",
+            \"coveredByNDC\": \"Outside NDC\",
+            \"ndcInformation\": null,
+            \"currentRegistry\": \"American Carbon Registry (ACR)\",
+            \"registryOfOrigin\": \"American Carbon Registry (ACR)\",
+            \"originProjectId\": \"ATP1\",
+            \"unitMetric\": \"tCO2e\",
+            \"methodology\": \"ACR - Afforestation and Reforestation of Degraded Lands\",
+            \"validationBody\": null,
+            \"validationDate\": null,
+            \"projectTags\": null,
+            \"issuances\": [
                 {
-                    "startDate": "2025-02-03T05:00:00.000Z",
-                    "endDate": "2025-02-28T05:00:00.000Z",
-                    "verificationApproach": "ATP-TEST",
-                    "verificationBody": "ATP-Verification",
-                    "verificationReportDate": "2025-02-14T05:00:00.000Z"
+                    \"startDate\": \"2025-02-03T05:00:00.000Z\",
+                    \"endDate\": \"2025-02-28T05:00:00.000Z\",
+                    \"verificationApproach\": \"ATP-TEST\",
+                    \"verificationBody\": \"ATP-Verification\",
+                    \"verificationReportDate\": \"2025-02-14T05:00:00.000Z\"
                 }
             ],
-            "projectLocations": [
+            \"projectLocations\": [
                 {
-                    "country": "Zambia",
-                    "geographicIdentifier": "123 Testing Ave",
-                    "inCountryRegion": "",
-                    "fileId": ""
+                    \"country\": \"Zambia\",
+                    \"geographicIdentifier\": \"123 Testing Ave\",
+                    \"inCountryRegion\": \"\",
+                    \"fileId\": \"\"
                 }
             ]
-        }')
+        }'")
 
     echo "[DEBUG] Create project response:"
     echo "$response"
@@ -408,8 +411,12 @@ test_create_project () {
         echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
 
         # Get staging entries
-        response=$(curl -s --location --request GET "$STAGING_ENDPOINT" \
-            --header 'Content-Type: application/json')
+        response=$(make_api_call "curl -s --location --request GET '$STAGING_ENDPOINT' \
+            --header 'Content-Type: application/json'")
+        if [[ $? -ne 0 ]]; then
+            fail_test "Failed to get staging entries"
+            return
+        fi
 
         # Check if our project UUID exists in staging
         if echo "$response" | jq -e --arg uuid "$project_uuid" '.[] | select(.uuid == $uuid)' > /dev/null; then
@@ -449,22 +456,22 @@ test_add_unit () {
 
     # Create unit
     echo "[DEBUG] Creating new unit..."
-    response=$(curl -s --location -g --request POST "$UNITS_ENDPOINT" \
+    response=$(make_api_call "curl -s --location -g --request POST '$UNITS_ENDPOINT' \
         --header 'Content-Type: application/json' \
         --data-raw '{
-            "projectLocationId": "ID_USA",
-            "unitOwner": "Chia",
-            "countryJurisdictionOfOwner": "Andorra",
-            "vintageYear": 1998,
-            "unitType": "Removal - technical",
-            "unitStatus": "Held",
-            "unitBlockStart": "abc123",
-            "unitBlockEnd": "bcd456",
-            "unitCount": 200,
-            "unitRegistryLink": "http://climateWarehouse.com/myRegistry",
-            "correspondingAdjustmentDeclaration": "Unknown",
-            "correspondingAdjustmentStatus": "Not Started"
-        }')
+            \"projectLocationId\": \"ID_USA\",
+            \"unitOwner\": \"Chia\",
+            \"countryJurisdictionOfOwner\": \"Andorra\",
+            \"vintageYear\": 1998,
+            \"unitType\": \"Removal - technical\",
+            \"unitStatus\": \"Held\",
+            \"unitBlockStart\": \"abc123\",
+            \"unitBlockEnd\": \"bcd456\",
+            \"unitCount\": 200,
+            \"unitRegistryLink\": \"http://climateWarehouse.com/myRegistry\",
+            \"correspondingAdjustmentDeclaration\": \"Unknown\",
+            \"correspondingAdjustmentStatus\": \"Not Started\"
+        }'")
 
     echo "[DEBUG] Create unit response:"
     echo "$response"
@@ -500,8 +507,12 @@ test_delete_home_org () {
     echo "Testing home organization deletion... (this can take up to 5 minutes)"
 
     # First get the current home org UID
-    response=$(curl -s --location --request GET "$DELETE_ENDPOINT" \
-        --header 'Content-Type: application/json')
+    response=$(make_api_call "curl -s --location --request GET '$DELETE_ENDPOINT' \
+        --header 'Content-Type: application/json'")
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to get organizations"
+        return
+    fi
 
     # Find any home org that exists
     org_uid=$(echo "$response" | jq -r 'to_entries[] | select(.value.isHome == true) | .key')
@@ -515,7 +526,7 @@ test_delete_home_org () {
 
     # Delete the home organization
     echo "[DEBUG] Deleting home organization..."
-    response=$(curl -s --location --request DELETE "$DELETE_ENDPOINT/$org_uid")
+    response=$(make_api_call "curl -s --location --request DELETE '$DELETE_ENDPOINT/$org_uid'")
 
     echo "[DEBUG] Delete organization response:"
     echo "$response"
@@ -533,8 +544,12 @@ test_delete_home_org () {
         echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
 
         # Get current organizations
-        response=$(curl -s --location --request GET "$DELETE_ENDPOINT" \
-            --header 'Content-Type: application/json')
+        response=$(make_api_call "curl -s --location --request GET '$DELETE_ENDPOINT' \
+            --header 'Content-Type: application/json'")
+        if [[ $? -ne 0 ]]; then
+            fail_test "Failed to get organizations"
+            return
+        fi
 
         # Check if any home orgs exist
         if echo "$response" | jq -e 'to_entries[] | select(.value.isHome == true) | length == 0' > /dev/null; then
@@ -556,6 +571,40 @@ test_delete_home_org () {
         echo -e "${RED}●${NC} Organization still exists - checking again in $CHECK_INTERVAL seconds"
         sleep "$CHECK_INTERVAL"
         ((i++))
+    done
+}
+
+# Helper function to make API calls with wallet sync check
+make_api_call() {
+    local TIMEOUT_SECONDS=300  # 5 minutes
+    local CHECK_INTERVAL=5
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
+    local i=0
+    local response
+
+    while true; do
+        response=$(eval "$1")
+
+        # Check if response contains the wallet not available error
+        if echo "$response" | jq -e '.error and .error | contains("Your wallet is not available")' > /dev/null; then
+            echo "[DEBUG] Wallet not available, checking sync status..."
+            if ! is_wallet_synced; then
+                return 1
+            fi
+
+            if (( i >= MAX_ATTEMPTS )); then
+                echo "[DEBUG] API call timeout after $TIMEOUT_SECONDS seconds"
+                echo "$response"
+                return 1
+            fi
+
+            ((i++))
+            continue
+        fi
+
+        # If we get here, we got a response that wasn't the wallet error
+        echo "$response"
+        return 0
     done
 }
 
