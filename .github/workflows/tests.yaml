@@ -72,6 +72,9 @@ jobs:
       - name: Install yq
         run: apt install -y yq
 
+      - name: npm install
+        run: npm install
+
       - name: Configure Chia
         shell: bash
         run: |
