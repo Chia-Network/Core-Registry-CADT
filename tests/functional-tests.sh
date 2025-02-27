@@ -139,19 +139,22 @@ cleanup () {
 fail_test () {
     TEST_FAILED=1
     ERROR_MESSAGE="$1"
-    pm2 logs core-registry-cadt --nostream
+    pm2 logs core-registry-cadt --nostream --lines 500
     cleanup
 }
 
 # Test if we are subscribed to all expected store IDs
 test_subscriptions () {
-    local TIMEOUT_SECONDS=300
+    local TIMEOUT_SECONDS=60
     local CHECK_INTERVAL=5
     local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
 
     echo "Testing DataLayer subscriptions... (this can take up to $TIMEOUT_SECONDS seconds)"
     echo "[DEBUG] Will check every $CHECK_INTERVAL seconds, up to $MAX_ATTEMPTS times"
     #check_health_endpoint
+
+    pm2 logs core-registry-cadt --nostream --lines 500
+
 
     i=0
     while true; do
