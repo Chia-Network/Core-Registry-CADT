@@ -25,18 +25,23 @@ expected_subscription_ids=(
 
 # Check if Chia wallet is synced. Do not proceed unless wallet is synced.
 is_wallet_synced () {
+    local TIMEOUT_SECONDS=300  # 5 minutes
+    local CHECK_INTERVAL=5
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
+
     i=0
     while ! chia rpc wallet get_sync_status | jq .synced ; do
-        echo -e "${RED}●${NC} Chia wallet is not synced - trying again in 5 seconds"
-        sleep 5
-        if (( $i > 12 )); then
-            fail_test "Wallet sync timeout of 60 seconds exceeded."
-            return
+        echo -e "${RED}●${NC} Chia wallet is not synced - trying again in $CHECK_INTERVAL seconds"
+        sleep "$CHECK_INTERVAL"
+        if (( i >= MAX_ATTEMPTS )); then
+            fail_test "Wallet sync timeout of $TIMEOUT_SECONDS seconds exceeded."
+            return 1
         fi
         ((i++))
     done
 
     echo -e "${GREEN}●${NC} Chia wallet is synced - proceeding"
+    return 0
 }
 
 # Check if any mirrors owned by us still exist. Wait until they're gone.
@@ -247,6 +252,11 @@ check_home_org () {
 
 # Test 2: Create a home organization
 test_create_home_org () {
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
     local TIMEOUT_SECONDS=1800  # 30 minutes
     local CHECK_INTERVAL=30
     local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
@@ -318,8 +328,168 @@ test_create_home_org () {
     done
 }
 
-# Test 3: Delete home organization
+# Test 3: Create and verify a project
+test_create_project () {
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
+    local TIMEOUT_SECONDS=60
+    local CHECK_INTERVAL=10
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
+    local PROJECTS_ENDPOINT="http://localhost:31310/v1/projects"
+    local STAGING_ENDPOINT="http://localhost:31310/v1/staging"
+    local response
+    local project_uuid
+
+    echo "Testing project creation... (this can take up to $TIMEOUT_SECONDS seconds)"
+
+    # Create project
+    echo "[DEBUG] Creating new project..."
+    response=$(curl -s --location -g --request POST "$PROJECTS_ENDPOINT" \
+        --header 'Content-Type: application/json' \
+        --data-raw '{
+            "projectName": "Automated Testing Project",
+            "projectId": "ATP1",
+            "projectDeveloper": "functional-tests.sh",
+            "program": null,
+            "projectLink": "https://observer.climateactiondata.org/",
+            "sector": "Agriculture; forestry and fishing",
+            "projectType": "Agriculture, Forestry and other land use (AFOLU)",
+            "projectStatus": "Completed",
+            "projectStatusDate": "2025-01-28T05:00:00.000Z",
+            "coveredByNDC": "Outside NDC",
+            "ndcInformation": null,
+            "currentRegistry": "American Carbon Registry (ACR)",
+            "registryOfOrigin": "American Carbon Registry (ACR)",
+            "originProjectId": "ATP1",
+            "unitMetric": "tCO2e",
+            "methodology": "ACR - Afforestation and Reforestation of Degraded Lands",
+            "validationBody": null,
+            "validationDate": null,
+            "projectTags": null,
+            "issuances": [
+                {
+                    "startDate": "2025-02-03T05:00:00.000Z",
+                    "endDate": "2025-02-28T05:00:00.000Z",
+                    "verificationApproach": "ATP-TEST",
+                    "verificationBody": "ATP-Verification",
+                    "verificationReportDate": "2025-02-14T05:00:00.000Z"
+                }
+            ],
+            "projectLocations": [
+                {
+                    "country": "Zambia",
+                    "geographicIdentifier": "123 Testing Ave",
+                    "inCountryRegion": "",
+                    "fileId": ""
+                }
+            ]
+        }')
+
+    echo "[DEBUG] Create project response:"
+    echo "$response"
+
+    # Check if creation was successful
+    if ! echo "$response" | jq -e '.success == true' > /dev/null; then
+        fail_test "Failed to create project: $(echo "$response" | jq -r '.message // "Unknown error"')"
+        return
+    fi
+
+    # Store the UUID
+    project_uuid=$(echo "$response" | jq -r '.uuid')
+    echo "[DEBUG] Project created with UUID: $project_uuid"
+
+    # Verify project appears in staging
+    echo "Verifying project appears in staging..."
+    i=0
+    while true; do
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+
+        # Get staging entries
+        response=$(curl -s --location --request GET "$STAGING_ENDPOINT" \
+            --header 'Content-Type: application/json')
+
+        # Check if our project UUID exists in staging
+        if echo "$response" | jq -e --arg uuid "$project_uuid" '.[] | select(.uuid == $uuid)' > /dev/null; then
+            echo -e "\n${GREEN}=========================================="
+            echo "✓ Project successfully created and found in staging - TEST PASSED"
+            echo "===========================================${NC}\n"
+            break
+        fi
+
+        if (( i >= MAX_ATTEMPTS )); then
+            echo -e "\n${RED}Project creation results after $TIMEOUT_SECONDS seconds:${NC}"
+            echo "Expected project UUID: $project_uuid"
+            echo "Current staging state:"
+            echo "$response" | jq '.'
+            fail_test "Project staging verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+            return
+        fi
+
+        echo -e "${RED}●${NC} Project not yet found in staging - checking again in $CHECK_INTERVAL seconds"
+        sleep "$CHECK_INTERVAL"
+        ((i++))
+    done
+}
+
+# Test 4: Add a unit
+test_add_unit () {
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
+    local UNITS_ENDPOINT="http://localhost:31310/v1/units"
+    local response
+    local unit_uuid
+
+    echo "Testing unit creation..."
+
+    # Create unit
+    echo "[DEBUG] Creating new unit..."
+    response=$(curl -s --location -g --request POST "$UNITS_ENDPOINT" \
+        --header 'Content-Type: application/json' \
+        --data-raw '{
+            "projectLocationId": "ID_USA",
+            "unitOwner": "Chia",
+            "countryJurisdictionOfOwner": "Andorra",
+            "vintageYear": 1998,
+            "unitType": "Removal - technical",
+            "unitStatus": "Held",
+            "unitBlockStart": "abc123",
+            "unitBlockEnd": "bcd456",
+            "unitCount": 200,
+            "unitRegistryLink": "http://climateWarehouse.com/myRegistry",
+            "correspondingAdjustmentDeclaration": "Unknown",
+            "correspondingAdjustmentStatus": "Not Started"
+        }')
+
+    echo "[DEBUG] Create unit response:"
+    echo "$response"
+
+    # Check if creation was successful
+    if ! echo "$response" | jq -e '.success == true' > /dev/null; then
+        fail_test "Failed to create unit: $(echo "$response" | jq -r '.message // "Unknown error"')"
+        return
+    fi
+
+    # Store the UUID for potential future use
+    unit_uuid=$(echo "$response" | jq -r '.uuid')
+
+    echo -e "\n${GREEN}=========================================="
+    echo "✓ Unit successfully created with UUID: $unit_uuid - TEST PASSED"
+    echo "===========================================${NC}\n"
+}
+
+# Test 5: Delete home organization
 test_delete_home_org () {
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
     local TIMEOUT_SECONDS=300
     local CHECK_INTERVAL=15
     local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
@@ -389,50 +559,6 @@ test_delete_home_org () {
     done
 }
 
-# Test 4: Add a unit
-test_add_unit () {
-    local UNITS_ENDPOINT="http://localhost:31310/v1/units"
-    local response
-    local unit_uuid
-
-    echo "Testing unit creation..."
-
-    # Create unit
-    echo "[DEBUG] Creating new unit..."
-    response=$(curl -s --location -g --request POST "$UNITS_ENDPOINT" \
-        --header 'Content-Type: application/json' \
-        --data-raw '{
-            "projectLocationId": "ID_USA",
-            "unitOwner": "Chia",
-            "countryJurisdictionOfOwner": "Andorra",
-            "vintageYear": 1998,
-            "unitType": "Removal - technical",
-            "unitStatus": "Held",
-            "unitBlockStart": "abc123",
-            "unitBlockEnd": "bcd456",
-            "unitCount": 200,
-            "unitRegistryLink": "http://climateWarehouse.com/myRegistry",
-            "correspondingAdjustmentDeclaration": "Unknown",
-            "correspondingAdjustmentStatus": "Not Started"
-        }')
-
-    echo "[DEBUG] Create unit response:"
-    echo "$response"
-
-    # Check if creation was successful
-    if ! echo "$response" | jq -e '.success == true' > /dev/null; then
-        fail_test "Failed to create unit: $(echo "$response" | jq -r '.message // "Unknown error"')"
-        return
-    fi
-
-    # Store the UUID for potential future use
-    unit_uuid=$(echo "$response" | jq -r '.uuid')
-
-    echo -e "\n${GREEN}=========================================="
-    echo "✓ Unit successfully created with UUID: $unit_uuid - TEST PASSED"
-    echo "===========================================${NC}\n"
-}
-
 #~~~ Start Chia ~~~ #
 
 chia start wallet data
@@ -461,11 +587,14 @@ test_subscriptions
 # Test 2: Create a home organization
 test_create_home_org
 
-# Test 3: Delete home organization
-test_delete_home_org
+# Test 3: Create and verify a project
+test_create_project
 
 # Test 4: Add a unit
 #test_add_unit
+
+# Test 5: Delete home organization (do this last)
+test_delete_home_org
 
 # If we got here with no failures, run cleanup and exit successfully
 cleanup
