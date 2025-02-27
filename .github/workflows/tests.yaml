@@ -97,9 +97,11 @@ jobs:
 
           # Configure CADT to most verbose logs
           yq -yi '.GENERAL.LOG_LEVEL = "trace"' ~/.chia/mainnet/core-registry/config.yaml
-          yq -yi '.GOVERNANCE.GOVERNANCE_BODY_ID = "1019153f631bb82e7fc4984dc1f0f2af9e95a7c29df743f7b4dcc2b975857409"' ~/.chia/mainnet/core-registry/config.yaml
+          yq -yi '.CADT.GOVERNANCE.GOVERNANCE_BODY_ID = "1019153f631bb82e7fc4984dc1f0f2af9e95a7c29df743f7b4dcc2b975857409"' ~/.chia/mainnet/core-registry/config.yaml
           yq -yi '.CHIA.DATALAYER_HOST = "https://127.0.0.1:8562"' ~/.chia/mainnet/core-registry/config.yaml
           yq -yi '.CHIA.WALLET_HOST = "https://127.0.0.1:9256"' ~/.chia/mainnet/core-registry/config.yaml
+
+          cat ~/.chia/mainnet/core-registry/config.yaml
 
       - name: Run tests
         run: bash tests/functional-tests.sh
