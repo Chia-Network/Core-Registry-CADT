@@ -1,3 +1,76 @@
+## [1.7.16](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc19...1.7.16) (2025-03-11)
+
+
+
+## [1.7.15](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc16...1.7.15) (2025-02-06)
+
+
+
+## [1.7.14](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.13...1.7.14) (2024-12-04)
+
+
+
+## [1.7.13](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.12...1.7.13) (2024-11-04)
+
+
+
+## [1.7.12](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.11...1.7.12) (2024-07-26)
+
+
+
+## [1.7.11](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.10...1.7.11) (2024-06-06)
+
+
+
+## [1.7.10](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.9...1.7.10) (2024-04-10)
+
+
+
+## [1.7.9](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.8...1.7.9) (2024-04-09)
+
+
+
+## [1.7.8](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.7...1.7.8) (2024-04-08)
+
+
+
+## [1.7.7](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.6...1.7.7) (2024-03-08)
+
+
+
+## [1.7.6](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.5...1.7.6) (2024-02-20)
+
+
+
+## [1.7.5](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.4...1.7.5) (2024-02-15)
+
+
+
+## [1.7.4](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.3...1.7.4) (2024-02-12)
+
+
+
+## [1.7.3](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.2...1.7.3) (2024-01-19)
+
+
+
+## [1.7.2](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.1...1.7.2) (2024-01-13)
+
+
+
+## [1.7.15-rc19](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc18...1.7.15-rc19) (2025-03-11)
+
+
+### Bug Fixes
+
+* loop bound injection vectors ([336c8b6](https://github.com/Chia-Network/Core-Registry-CADT/commit/336c8b6fd3e292a08d4535d3f5567ebbfeccf0a0))
+
+
+
+## [1.7.15-rc17](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15...1.7.15-rc17) (2025-02-06)
+
+
+
 ## [1.7.15](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc16...1.7.15) (2025-02-06)
 
 
