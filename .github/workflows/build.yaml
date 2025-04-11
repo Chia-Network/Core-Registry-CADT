@@ -128,7 +128,7 @@ jobs:
 
       - name: Import Apple Application signing certificate
         if: matrix.runs-on == 'macos-latest' && steps.check_secrets.outputs.HAS_SIGNING_SECRET && startsWith(github.ref, 'refs/tags/')
-        uses: Apple-Actions/import-codesign-certs@v4.0.1
+        uses: Apple-Actions/import-codesign-certs@v3
         with:
           create-keychain: false # Created when importing the first cert
           keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
