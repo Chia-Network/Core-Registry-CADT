@@ -14,8 +14,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 logger.info('CADT:server');
 
-console.log('this is a test');
-
 const port = CONFIG().CADT.PORT || 3030;
 const bindAddress = CONFIG().CADT.BIND_ADDRESS || 'localhost';
 const server = http.createServer(rootRouter);
