@@ -1,3 +1,86 @@
+## [1.7.17](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.17-rc3...1.7.17) (2025-04-15)
+
+
+
+## [1.7.16](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc19...1.7.16) (2025-03-11)
+
+
+
+## [1.7.15](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc16...1.7.15) (2025-02-06)
+
+
+
+## [1.7.14](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.13...1.7.14) (2024-12-04)
+
+
+
+## [1.7.13](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.12...1.7.13) (2024-11-04)
+
+
+
+## [1.7.12](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.11...1.7.12) (2024-07-26)
+
+
+
+## [1.7.11](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.10...1.7.11) (2024-06-06)
+
+
+
+## [1.7.10](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.9...1.7.10) (2024-04-10)
+
+
+
+## [1.7.9](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.8...1.7.9) (2024-04-09)
+
+
+
+## [1.7.8](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.7...1.7.8) (2024-04-08)
+
+
+
+## [1.7.7](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.6...1.7.7) (2024-03-08)
+
+
+
+## [1.7.6](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.5...1.7.6) (2024-02-20)
+
+
+
+## [1.7.5](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.4...1.7.5) (2024-02-15)
+
+
+
+## [1.7.4](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.3...1.7.4) (2024-02-12)
+
+
+
+## [1.7.3](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.2...1.7.3) (2024-01-19)
+
+
+
+## [1.7.2](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.1...1.7.2) (2024-01-13)
+
+
+
+## [1.7.17-rc3](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.17-rc2...1.7.17-rc3) (2025-04-15)
+
+
+### Bug Fixes
+
+* mirror creation logic ([b23792f](https://github.com/Chia-Network/Core-Registry-CADT/commit/b23792f5ce729ca909b57390612418d34dc94e65))
+* support http and https on ip update script ([002836f](https://github.com/Chia-Network/Core-Registry-CADT/commit/002836f548608ea7132e1eaea57463903fdddb30))
+
+
+### Features
+
+* add script to update datalayer URL and reset mirrors ([fba7851](https://github.com/Chia-Network/Core-Registry-CADT/commit/fba7851f040f45d1e1406fb8a52c04c371d2fc3c))
+
+
+
+## [1.7.15-rc20](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.16...1.7.15-rc20) (2025-03-11)
+
+
+
 ## [1.7.16](https://github.com/Chia-Network/Core-Registry-CADT/compare/1.7.15-rc19...1.7.16) (2025-03-11)
 
 
