@@ -1,6 +1,6 @@
 {
   "*.+(js|ts|tsx)": [
     "eslint",
-    "prettier --write"
+    "prettier --write 'src/**/*.(js|ts|tsx)'"
   ]
 }
