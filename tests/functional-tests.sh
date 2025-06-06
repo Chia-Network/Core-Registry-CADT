@@ -16,9 +16,12 @@ TEST_FAILED=0
 ERROR_MESSAGE=""
 
 expected_subscription_ids=(
-    "1019153f631bb82e7fc4984dc1f0f2af9e95a7c29df743f7b4dcc2b975857409"
-    "18b6ff2ebf73574d30a39e1ee58efa3b7e8f1b35a4f9e6abd41690ab87bd15c7"
-    "a2194bd3f35268f50a48066a5da428fdc5f136fcf30c468fcf480a1ed0aaa4a1"
+    "607b73c0f7c1edf42281509ac06a76c833e1e79e7bfc5b94b988f2d450ed4bbd"
+    "b029dc3a1fccacdd93ab11edb4967f92fc39bdbad072aa190b133168b1afb1db"
+    "fb47e3645155e35c857169f7bc3677389dfbd922e750394bd996bf13c1f1600e"
+    "725eef05a98494b96b0d3478baa7b33825fd4caeb10d76f15dedfaee201ff485"
+    "63d863c0596f2639e0a479fee270a325a64cec1cf6fb2aada99349fa179912ff"
+    "fd16f763d191f29bc6d034d196d457bf6458db9fb5cf4cff8aa2369580c144e1"
 )
 
 ### Functions
@@ -616,8 +619,10 @@ sleep 5
 # call function to check if wallet it synced
 is_wallet_synced
 
+# Display wallet
 chia wallet show
 
+# Display datalayer subscriptions
 chia data get_subscriptions
 
 
