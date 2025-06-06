@@ -141,7 +141,7 @@ const getSubscribedStoreData = async (
   const decodedData = decodeDataLayerResponse(encodedData);
   logger.trace(
     `the data for subscribed store ${storeId} after conversion to js Object is:
-    
+
     ${JSON.stringify(decodedData)}`,
   );
 
@@ -205,7 +205,7 @@ const getRootDiff = (storeId, root1, root2) => {
  * @param {number} retry - Number of retry attempts.
  */
 const getStoreData = async (storeId, callback, onFail, rootHash, retry = 0) => {
-  const MAX_RETRIES = 6;
+  const MAX_RETRIES = 20;
   const RETRY_DELAY = 10000;
 
   try {
