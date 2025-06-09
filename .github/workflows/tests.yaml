@@ -105,6 +105,8 @@ jobs:
 
       - name: Run tests
         run: bash tests/functional-tests.sh
+        env:
+          TXCH_MNEMOMIC: ${{ secrets.TXCH_MNEMOMIC }}
 
       # - name: Remove all mirrors and subscriptions created in testing
       #   shell: bash
