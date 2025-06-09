@@ -33,18 +33,25 @@ is_wallet_synced () {
     local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
 
     i=0
-    while ! chia rpc wallet get_sync_status | jq .synced ; do
-        echo -e "${RED}●${NC} Chia wallet is not synced - trying again in $CHECK_INTERVAL seconds"
-        sleep "$CHECK_INTERVAL"
-        if (( i >= MAX_ATTEMPTS )); then
-            fail_test "Wallet sync timeout of $TIMEOUT_SECONDS seconds exceeded."
-            return 1
-        fi
-        ((i++))
-    done
+    while true; do
+        echo "[DEBUG] Running wallet sync status check..."
+        local response=$(chia rpc wallet get_sync_status)
+        echo "[DEBUG] Raw wallet sync response:"
+        echo "$response"
 
-    echo -e "${GREEN}●${NC} Chia wallet is synced - proceeding"
-    return 0
+        if ! echo "$response" | jq .synced ; then
+            echo -e "${RED}●${NC} Chia wallet is not synced - trying again in $CHECK_INTERVAL seconds"
+            sleep "$CHECK_INTERVAL"
+            if (( i >= MAX_ATTEMPTS )); then
+                fail_test "Wallet sync timeout of $TIMEOUT_SECONDS seconds exceeded."
+                return 1
+            fi
+            ((i++))
+        else
+            echo -e "${GREEN}●${NC} Chia wallet is synced - proceeding"
+            return 0
+        fi
+    done
 }
 
 # Check if any mirrors owned by us still exist. Wait until they're gone.
@@ -237,8 +244,19 @@ check_home_org () {
     echo "[DEBUG] Organizations response:"
     echo "$response"
 
+    # If response is empty or just {}, no organizations exist
+    if [[ -z "$response" ]] || [[ "$response" == "{}" ]]; then
+        echo -e "${GREEN}●${NC} No home organizations found"
+        return 0
+    fi
+
     # Count organizations with isHome=true
     home_orgs=$(echo "$response" | jq '[.[] | select(.isHome == true)] | length')
+    if [[ $? -ne 0 ]]; then
+        echo "[DEBUG] Failed to parse organizations response with jq"
+        fail_test "Failed to parse organizations response"
+        return 1
+    fi
 
     if (( home_orgs == 0 )); then
         echo -e "${GREEN}●${NC} No home organizations found"
