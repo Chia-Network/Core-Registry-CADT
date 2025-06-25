@@ -8,6 +8,7 @@ import { OrganizationController } from '../../../controllers';
 import {
   importOrganizationSchema,
   newOrganizationWithIconSchema,
+  editOrganizationSchema,
   resyncOrganizationSchema,
   subscribeOrganizationSchema,
   unsubscribeOrganizationSchema,
@@ -52,9 +53,14 @@ OrganizationRouter.post('/create', upload.single('file'), (req, res) => {
   return OrganizationController.createV2(req, res);
 });
 
-OrganizationRouter.put('/edit', upload.single('file'), (req, res) => {
-  return OrganizationController.editHomeOrg(req, res);
-});
+OrganizationRouter.put(
+  '/edit',
+  upload.single('file'),
+  validator.body(editOrganizationSchema),
+  (req, res) => {
+    return OrganizationController.editHomeOrg(req, res);
+  },
+);
 
 OrganizationRouter.put(
   '/',
