@@ -88,7 +88,7 @@ check_mirrors_removed () {
 check_health_endpoint () {
     i=0
     while true; do
-        response=$(curl -s http://127.0.0.1:31310/heath | jq -r '.message')
+        response=$(curl -s http://127.0.0.1:31310/health | jq -r '.message')
 
         if [[ "$response" == "OK" ]]; then
             echo "Health endpoint responding OK - proceeding"
