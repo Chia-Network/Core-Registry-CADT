@@ -165,7 +165,7 @@ fail_test () {
 # Test if we are subscribed to all expected store IDs
 test_subscriptions () {
     local TIMEOUT_SECONDS=300
-    local CHECK_INTERVAL=5
+    local CHECK_INTERVAL=10
     local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
 
     echo "Testing DataLayer subscriptions... (this can take up to $TIMEOUT_SECONDS seconds)"
