@@ -169,6 +169,14 @@ test_subscriptions () {
 
     echo "Testing DataLayer subscriptions... (this can take up to $TIMEOUT_SECONDS seconds)"
     echo "[DEBUG] Will check every $CHECK_INTERVAL seconds, up to $MAX_ATTEMPTS times"
+
+    # Print out the expected subscription IDs we're looking for
+    echo -e "\n${BLUE}Looking for these expected subscription IDs:${NC}"
+    for id in "${expected_subscription_ids[@]}"; do
+        echo -e "${BLUE}  - $id${NC}"
+    done
+    echo ""
+
     #check_health_endpoint
 
 
