@@ -208,8 +208,8 @@ test_subscriptions () {
 
         if (( missing_subs == 0 )); then
             echo -e "\n${GREEN}=========================================="
-            echo "✓ All expected subscriptions found - TEST PASSED"
-            echo "===========================================${NC}\n"
+            echo -e "✓ All expected subscriptions found - TEST PASSED"
+            echo -e "===========================================${NC}\n"
             break
         fi
 
@@ -339,8 +339,8 @@ test_create_home_org () {
         if echo "$response" | jq -e --arg uid "$org_uid" \
             '.[$uid] and .[$uid].isHome == true' > /dev/null; then
             echo -e "\n${GREEN}=========================================="
-            echo "✓ Home organization successfully created and verified - TEST PASSED"
-            echo "===========================================${NC}\n"
+            echo -e "✓ Home organization successfully created and verified - TEST PASSED"
+            echo -e "===========================================${NC}\n"
             break
         fi
 
@@ -449,8 +449,8 @@ test_create_project () {
         # Check if our project UUID exists in staging
         if echo "$response" | jq -e --arg uuid "$project_uuid" '.[] | select(.uuid == $uuid)' > /dev/null; then
             echo -e "\n${GREEN}=========================================="
-            echo "✓ Project successfully created and found in staging - TEST PASSED"
-            echo "===========================================${NC}\n"
+            echo -e "✓ Project successfully created and found in staging - TEST PASSED"
+            echo -e "===========================================${NC}\n"
             break
         fi
 
@@ -514,8 +514,8 @@ test_add_unit () {
     unit_uuid=$(echo "$response" | jq -r '.uuid')
 
     echo -e "\n${GREEN}=========================================="
-    echo "✓ Unit successfully created with UUID: $unit_uuid - TEST PASSED"
-    echo "===========================================${NC}\n"
+    echo -e "✓ Unit successfully created with UUID: $unit_uuid - TEST PASSED"
+    echo -e "===========================================${NC}\n"
 }
 
 # Test 5: Delete home organization
@@ -582,8 +582,8 @@ test_delete_home_org () {
         # Check if any home orgs exist
         if echo "$response" | jq -e 'to_entries[] | select(.value.isHome == true) | length == 0' > /dev/null; then
             echo -e "\n${GREEN}=========================================="
-            echo "✓ Home organization successfully deleted and verified - TEST PASSED"
-            echo "===========================================${NC}\n"
+            echo -e "✓ Home organization successfully deleted and verified - TEST PASSED"
+            echo -e "===========================================${NC}\n"
             break
         fi
 
