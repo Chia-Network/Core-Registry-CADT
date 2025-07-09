@@ -38,7 +38,11 @@ is_wallet_synced () {
         echo "[DEBUG] Raw wallet sync response:"
         echo "$response"
 
-        if ! echo "$response" | jq .synced ; then
+        # Check if wallet is synced by comparing the synced field to true
+        if echo "$response" | jq -e '.synced == true' > /dev/null; then
+            echo -e "${GREEN}●${NC} Chia wallet is synced - proceeding"
+            return 0
+        else
             echo -e "${RED}●${NC} Chia wallet is not synced - trying again in $CHECK_INTERVAL seconds"
             sleep "$CHECK_INTERVAL"
             if (( i >= MAX_ATTEMPTS )); then
@@ -46,9 +50,6 @@ is_wallet_synced () {
                 return 1
             fi
             ((i++))
-        else
-            echo -e "${GREEN}●${NC} Chia wallet is synced - proceeding"
-            return 0
         fi
     done
 }
