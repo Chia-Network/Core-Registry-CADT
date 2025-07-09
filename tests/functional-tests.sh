@@ -697,21 +697,37 @@ chia wallet show
 
 # Get wallet address and store it in test_wallet_address variable
 test_wallet_address=$(chia wallet get_address)
+if [[ $? -ne 0 ]]; then
+    fail_test "Failed to get wallet address"
+    return
+fi
 
 # Get wallet fingerprint
-test_wallet_fingerprint=$(chia rpc get_logged_in_fingerprint | jq -r '.fingerprint')
+test_wallet_fingerprint=$(chia rpc wallet get_logged_in_fingerprint | jq -r '.fingerprint')
+if [[ $? -ne 0 ]]; then
+    fail_test "Failed to get wallet fingerprint"
+    return
+fi
 
 # Create mnemonic.txt file with TXCH_MNEMONIC environment variable
 echo $TXCH_MNEMONIC > mnemonic.txt
 
 # Import wallet with TXCH
 chia keys add -f mnemonic.txt -l "txch-funds"
+if [[ $? -ne 0 ]]; then
+    fail_test "Failed to import TXCH wallet"
+    return
+fi
 
 # Remove mnemonic.txt file
 rm -f mnemonic.txt
 
 # Get wallet fingerprints and store the one for the txch funds in txch_funds_wallet variable
 txch_funds_fingerprint=$(chia rpc wallet get_public_keys | jq -r --arg exclude "$test_wallet_fingerprint" '.public_key_fingerprints[] | select(. != ($exclude | tonumber))')
+if [[ $? -ne 0 ]]; then
+    fail_test "Failed to get TXCH funds wallet fingerprint"
+    return
+fi
 
 # Show balance of txch funds wallet
 echo "Showing wallet to switch to txch funds wallet"
@@ -728,6 +744,10 @@ chia wallet show -f $txch_funds_fingerprint
 #chia wallet send -f $txch_funds_fingerprint -a 0.001 -t $test_wallet_address -m 0
 
 transaction_id=$(chia rpc wallet send_transaction '{"wallet_id": 1, "amount": 1000000000, "fee": 0, "memo": "transfer to test wallet", "to_address": "txch1234567890123456789012345678901234567890"}' | jq -r '.transaction_id')
+if [[ $? -ne 0 ]]; then
+    fail_test "Failed to send transaction"
+    return
+fi
 
 # Wait for the transaction to be confirmed
 wait_for_transaction "$transaction_id"
@@ -749,6 +769,10 @@ chia wallet show -f $test_wallet_fingerprint
 
 # Delete keys for txch funds wallet
 chia keys delete -f $txch_funds_fingerprint
+if [[ $? -ne 0 ]]; then
+    fail_test "Failed to delete TXCH funds wallet keys"
+    return
+fi
 
 # Display datalayer subscriptions
 echo "Displaying datalayer subscriptions before starting core-registry-cadt"
