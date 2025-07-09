@@ -71,13 +71,9 @@ wait_for_transaction() {
 
         if [[ $? -ne 0 ]]; then
             echo "[DEBUG] Failed to get transaction status"
-            sleep "$CHECK_INTERVAL"
-            if (( i >= MAX_ATTEMPTS )); then
-                fail_test "Transaction status check timeout of $TIMEOUT_SECONDS seconds exceeded."
-                return 1
-            fi
-            ((i++))
-            continue
+            echo "[DEBUG] Response: $response"
+            fail_test "Failed to get transaction status. This usually means the transaction ID is invalid or empty."
+            return 1
         fi
 
         echo "[DEBUG] Transaction response:"
@@ -98,6 +94,41 @@ wait_for_transaction() {
         sleep "$CHECK_INTERVAL"
         ((i++))
     done
+}
+
+# Function to check if wallet has sufficient balance
+check_wallet_balance() {
+    local wallet_id="$1"
+    local min_balance="$2"
+
+    echo "Checking wallet $wallet_id balance..."
+    local balance_response
+    balance_response=$(chia rpc wallet get_wallet_balances "{\"wallet_ids\": [$wallet_id]}")
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to get wallet balance"
+        return
+    fi
+
+    echo "[DEBUG] Balance response:"
+    echo "$balance_response"
+
+    # Extract the confirmed wallet balance
+    local confirmed_balance
+    confirmed_balance=$(echo "$balance_response" | jq -r ".wallet_balances[\"$wallet_id\"].confirmed_wallet_balance")
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to parse wallet balance"
+        return
+    fi
+
+    echo "Wallet $wallet_id confirmed balance: $confirmed_balance mojos"
+
+    # Check if balance is sufficient
+    if (( confirmed_balance < min_balance )); then
+        fail_test "Wallet $wallet_id balance ($confirmed_balance mojos) is insufficient. Need at least $min_balance mojos."
+        return
+    fi
+
+    echo -e "${GREEN}●${NC} Wallet $wallet_id has sufficient balance ($confirmed_balance mojos)"
 }
 
 # Check if any mirrors owned by us still exist. Wait until they're gone.
@@ -797,6 +828,9 @@ chia wallet show -f $txch_funds_fingerprint
 # Show balance of test wallet
 echo "Showing balance of test wallet after transfer - may need to wait for sync"
 chia wallet show -f $test_wallet_fingerprint
+
+# Check if wallet balance is greater than 100000000 mojos
+check_wallet_balance 1 100000000
 
 # call function to check if wallet it synced
 is_wallet_synced
