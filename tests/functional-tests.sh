@@ -53,6 +53,52 @@ is_wallet_synced () {
     done
 }
 
+# Function to wait for transaction confirmation
+wait_for_transaction() {
+    local transaction_id="$1"
+    local TIMEOUT_SECONDS=300  # 5 minutes
+    local CHECK_INTERVAL=5     # 5 seconds
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
+
+    i=0
+    while true; do
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+
+        # Get transaction status
+        local response
+        response=$(chia rpc wallet get_transaction "{\"transaction_id\": \"$transaction_id\"}")
+
+        if [[ $? -ne 0 ]]; then
+            echo "[DEBUG] Failed to get transaction status"
+            sleep "$CHECK_INTERVAL"
+            if (( i >= MAX_ATTEMPTS )); then
+                fail_test "Transaction status check timeout of $TIMEOUT_SECONDS seconds exceeded."
+                return 1
+            fi
+            ((i++))
+            continue
+        fi
+
+        echo "[DEBUG] Transaction response:"
+        echo "$response"
+
+        # Check if transaction is confirmed
+        if echo "$response" | jq -e '.transaction.confirmed == true' > /dev/null; then
+            echo -e "${GREEN}●${NC} Transaction $transaction_id confirmed successfully"
+            return 0
+        fi
+
+        if (( i >= MAX_ATTEMPTS )); then
+            fail_test "Transaction confirmation timeout of $TIMEOUT_SECONDS seconds exceeded. Transaction ID: $transaction_id"
+            return 1
+        fi
+
+        echo -e "${RED}●${NC} Transaction not yet confirmed - checking again in $CHECK_INTERVAL seconds"
+        sleep "$CHECK_INTERVAL"
+        ((i++))
+    done
+}
+
 # Check if any mirrors owned by us still exist. Wait until they're gone.
 check_mirrors_removed () {
     i=0
@@ -647,10 +693,66 @@ is_wallet_synced
 # Display wallet
 chia wallet show
 
+#~~~ Transfer funds to test wallet ~~~ #
+
+# Get wallet address and store it in test_wallet_address variable
+test_wallet_address=$(chia wallet get_address)
+
+# Get wallet fingerprint
+test_wallet_fingerprint=$(chia rpc get_logged_in_fingerprint | jq -r '.fingerprint')
+
+# Create mnemonic.txt file with TXCH_MNEMONIC environment variable
+echo $TXCH_MNEMONIC > mnemonic.txt
+
+# Import wallet with TXCH
+chia keys add -f mnemonic.txt -l "txch-funds"
+
+# Remove mnemonic.txt file
+rm -f mnemonic.txt
+
+# Get wallet fingerprints and store the one for the txch funds in txch_funds_wallet variable
+txch_funds_fingerprint=$(chia rpc wallet get_public_keys | jq -r --arg exclude "$test_wallet_fingerprint" '.public_key_fingerprints[] | select(. != ($exclude | tonumber))')
+
+# Show balance of txch funds wallet
+echo "Showing wallet to switch to txch funds wallet"
+chia wallet show -f $txch_funds_fingerprint
+
+# call function to check if wallet it synced
+is_wallet_synced
+
+# Show balance of txch funds wallet
+echo "Showing balance now that we're sure the wallet is synced"
+chia wallet show -f $txch_funds_fingerprint
+
+# Transfer funds to test wallet
+#chia wallet send -f $txch_funds_fingerprint -a 0.001 -t $test_wallet_address -m 0
+
+transaction_id=$(chia rpc wallet send_transaction '{"wallet_id": 1, "amount": 1000000000, "fee": 0, "memo": "transfer to test wallet", "to_address": "txch1234567890123456789012345678901234567890"}' | jq -r '.transaction_id')
+
+# Wait for the transaction to be confirmed
+wait_for_transaction "$transaction_id"
+
+# Show balance of txch funds wallet
+echo "Showing balance of txch funds wallet after transfer"
+chia wallet show -f $txch_funds_fingerprint
+
+# Show balance of test wallet
+echo "Showing balance of test wallet after transfer - may need to wait for sync"
+chia wallet show -f $test_wallet_fingerprint
+
+# call function to check if wallet it synced
+is_wallet_synced
+
+# Show balance of test wallet
+echo "Showing balance of test wallet after sync"
+chia wallet show -f $test_wallet_fingerprint
+
+# Delete keys for txch funds wallet
+chia keys delete -f $txch_funds_fingerprint
+
 # Display datalayer subscriptions
+echo "Displaying datalayer subscriptions before starting core-registry-cadt"
 chia data get_subscriptions
-
-
 
 # start core-registry-cadt in the background
 pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
