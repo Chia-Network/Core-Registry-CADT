@@ -778,11 +778,14 @@ chia wallet show -f $txch_funds_fingerprint
 # Transfer funds to test wallet
 #chia wallet send -f $txch_funds_fingerprint -a 0.001 -t $test_wallet_address -m 0
 
-transaction_id=$(chia rpc wallet send_transaction '{"wallet_id": 1, "amount": 1000000000, "fee": 0, "memo": "transfer to test wallet", "to_address": "txch1234567890123456789012345678901234567890"}' | jq -r '.transaction_id')
+echo "Sending transaction to transfer 0.001 TXCH to test wallet"
+transaction_id=$(chia rpc wallet send_transaction '{"wallet_id": 1, "amount": 1000000000, "fee": 0, "memos":["transfer to test wallet"], "address": "txch1234567890123456789012345678901234567890"}' | jq -r '.transaction_id')
 if [[ $? -ne 0 ]]; then
     fail_test "Failed to send transaction"
     return
 fi
+
+echo "Transaction ID: $transaction_id"
 
 # Wait for the transaction to be confirmed
 wait_for_transaction "$transaction_id"
