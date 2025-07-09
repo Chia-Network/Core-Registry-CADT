@@ -713,12 +713,18 @@ fi
 echo "Test wallet fingerprint: $test_wallet_fingerprint"
 
 # Create mnemonic.txt file with TXCH_MNEMONIC environment variable
-echo $TXCH_MNEMONIC > mnemonic.txt
+if [[ -z "$TXCH_MNEMONIC" ]]; then
+    fail_test "TXCH_MNEMONIC environment variable is not set. Please set it with a valid 24-word mnemonic phrase containing TXCH funds for testing."
+    return
+fi
+
+echo "$TXCH_MNEMONIC" > mnemonic.txt
+
 
 # Import wallet with TXCH
 chia keys add -f mnemonic.txt -l "txch-funds"
 if [[ $? -ne 0 ]]; then
-    fail_test "Failed to import TXCH wallet"
+    fail_test "Failed to import TXCH wallet. Check that TXCH_MNEMONIC contains a valid 24-word mnemonic phrase."
     return
 fi
 
