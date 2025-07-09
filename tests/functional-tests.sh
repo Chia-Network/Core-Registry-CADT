@@ -701,6 +701,8 @@ if [[ $? -ne 0 ]]; then
     fail_test "Failed to get wallet address"
     return
 fi
+echo "Test wallet address: $test_wallet_address"
+
 
 # Get wallet fingerprint
 test_wallet_fingerprint=$(chia rpc wallet get_logged_in_fingerprint | jq -r '.fingerprint')
@@ -708,6 +710,7 @@ if [[ $? -ne 0 ]]; then
     fail_test "Failed to get wallet fingerprint"
     return
 fi
+echo "Test wallet fingerprint: $test_wallet_fingerprint"
 
 # Create mnemonic.txt file with TXCH_MNEMONIC environment variable
 echo $TXCH_MNEMONIC > mnemonic.txt
@@ -728,6 +731,7 @@ if [[ $? -ne 0 ]]; then
     fail_test "Failed to get TXCH funds wallet fingerprint"
     return
 fi
+echo "TXCH funds wallet fingerprint: $txch_funds_fingerprint"
 
 # Show balance of txch funds wallet
 echo "Showing wallet to switch to txch funds wallet"
