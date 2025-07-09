@@ -726,11 +726,35 @@ fi
 rm -f mnemonic.txt
 
 # Get wallet fingerprints and store the one for the txch funds in txch_funds_wallet variable
-txch_funds_fingerprint=$(chia rpc wallet get_public_keys | jq -r --arg exclude "$test_wallet_fingerprint" '.public_key_fingerprints[] | select(. != ($exclude | tonumber))')
+echo "[DEBUG] Getting all wallet fingerprints..."
+all_fingerprints_response=$(chia rpc wallet get_public_keys)
 if [[ $? -ne 0 ]]; then
-    fail_test "Failed to get TXCH funds wallet fingerprint"
+    fail_test "Failed to get wallet fingerprints"
     return
 fi
+
+echo "[DEBUG] All fingerprints response:"
+echo "$all_fingerprints_response"
+
+# Check if response is empty or invalid
+if [[ -z "$all_fingerprints_response" ]]; then
+    fail_test "Empty response from chia rpc wallet get_public_keys"
+    return
+fi
+
+# Extract the fingerprint that doesn't match test_wallet_fingerprint
+txch_funds_fingerprint=$(echo "$all_fingerprints_response" | jq -r --arg exclude "$test_wallet_fingerprint" '.public_key_fingerprints[] | select(. != ($exclude | tonumber))')
+if [[ $? -ne 0 ]]; then
+    fail_test "Failed to parse wallet fingerprints with jq"
+    return
+fi
+
+# Check if we got a valid fingerprint
+if [[ -z "$txch_funds_fingerprint" ]]; then
+    fail_test "No TXCH funds wallet fingerprint found"
+    return
+fi
+
 echo "TXCH funds wallet fingerprint: $txch_funds_fingerprint"
 
 # Show balance of txch funds wallet
