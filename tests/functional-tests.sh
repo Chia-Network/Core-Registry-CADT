@@ -413,6 +413,18 @@ test_create_home_org () {
             return
         fi
 
+        echo "[DEBUG] Organizations check response:"
+        echo "$response"
+
+        # Check if response is valid JSON
+        if ! echo "$response" | jq empty > /dev/null 2>&1; then
+            echo "[DEBUG] Invalid JSON response received"
+            echo "[DEBUG] Response content: $response"
+            sleep "$CHECK_INTERVAL"
+            ((i++))
+            continue
+        fi
+
         # Check if our org exists and is home org
         if echo "$response" | jq -e --arg uid "$org_uid" \
             '.[$uid] and .[$uid].isHome == true' > /dev/null; then
