@@ -82,6 +82,7 @@ jobs:
           chia keys generate -l "functional_tests"
           chia-tools network switch testneta
           chia-tools config add-trusted-peer -y 54.214.229.33 58444
+          chia configure -log-level INFO
 
       - name: Configure CADT
         shell: bash

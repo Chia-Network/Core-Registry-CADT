@@ -414,9 +414,9 @@ test_create_home_org () {
         return
     fi
 
-    local TIMEOUT_SECONDS=1800  # 30 minutes
+    local TIMEOUT_SECONDS=900   # 15 minutes
     local CHECK_INTERVAL=30
-    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
+    local MAX_ATTEMPTS=30
     local CREATE_ENDPOINT="http://localhost:31310/v1/organizations/create"
 
     echo "Testing home organization creation... (this can take up to 30 minutes)"
@@ -490,6 +490,14 @@ test_create_home_org () {
         local home_org
         home_org=$(echo "$response" | jq -r 'to_entries[] | select(.value.isHome == true) | .key')
 
+                if (( $i >= $MAX_ATTEMPTS )); then
+            echo -e "\n${RED}Organization creation results after $TIMEOUT_SECONDS seconds:${NC}"
+            echo "Current organizations state:"
+            echo "$response" | jq '.'
+            fail_test "Organization creation verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+            return
+        fi
+
         if [[ -n "$home_org" && "$home_org" != "null" ]]; then
             # Check if it's still pending
             if [[ "$home_org" == "PENDING" ]]; then
@@ -534,14 +542,6 @@ test_create_home_org () {
             sleep "$CHECK_INTERVAL"
             ((i++))
             continue
-        fi
-
-        if (( $i >= $MAX_ATTEMPTS )); then
-            echo -e "\n${RED}Organization creation results after $TIMEOUT_SECONDS seconds:${NC}"
-            echo "Current organizations state:"
-            echo "$response" | jq '.'
-            fail_test "Organization creation verification timeout of $TIMEOUT_SECONDS seconds exceeded."
-            return
         fi
     done
 }
