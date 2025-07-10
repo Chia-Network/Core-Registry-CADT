@@ -514,15 +514,24 @@ test_create_home_org () {
             return
         fi
 
-        # Find the home organization (if any)
+                # Find the home organization (if any)
         local home_org
         home_org=$(echo "$response" | jq -r 'to_entries[] | select(.value.isHome == true) | .key')
 
-                if (( $i >= $MAX_ATTEMPTS )); then
+        if (( $i >= $MAX_ATTEMPTS )); then
             echo -e "\n${RED}Organization creation results after $TIMEOUT_SECONDS seconds:${NC}"
             echo "Current organizations state:"
             echo "$response" | jq '.'
             fail_test "Organization creation verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+            return
+        fi
+
+        # If no home organization is found, fail immediately
+        if [[ -z "$home_org" || "$home_org" == "null" ]]; then
+            echo -e "\n${RED}No home organization found in response${NC}"
+            echo "Current organizations state:"
+            echo "$response" | jq '.'
+            fail_test "No home organization found. Organization creation may have failed."
             return
         fi
 
