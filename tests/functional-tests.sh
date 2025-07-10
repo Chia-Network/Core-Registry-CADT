@@ -987,7 +987,7 @@ transfer_funds_to_test_wallet() {
 
 #~~~ Start Chia ~~~ #
 
-chia start wallet data
+chia start wallet data data_layer_http
 sleep 5
 
 # call function to check if wallet it synced
