@@ -108,10 +108,12 @@ jobs:
         env:
           TXCH_MNEMONIC: ${{ secrets.TXCH_MNEMONIC }}
 
-      # - name: Remove all mirrors and subscriptions created in testing
-      #   shell: bash
-      #   run: |
-      #     chia-tools data delete-mirrors
-      #     chia-tools data unsub-all
-      #     echo "Waiting 120 seconds for mirrors and subscriptions to be removed..."
-      #     sleep 120
+      - name: Upload logs as artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: functional-test-logs
+          path: |
+            core-registry-cadt.log
+            ~/.chia/mainnet/log/debug.log
+          retention-days: 30

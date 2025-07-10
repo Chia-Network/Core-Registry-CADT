@@ -209,6 +209,12 @@ check_unsubscribed () {
 cleanup () {
     echo -e "\n${GREEN}Running cleanup tasks...${NC}"
 
+    # Save pm2 logs to file regardless of test outcome
+    echo "Saving pm2 logs to file..."
+    local log_file="core-registry-cadt.log"
+    pm2 logs core-registry-cadt --nostream > "$log_file" 2>&1
+    echo "PM2 logs saved to: $log_file"
+
     # Stop the core-registry-cadt
     pm2 stop core-registry-cadt
 
@@ -234,7 +240,6 @@ cleanup () {
 fail_test () {
     TEST_FAILED=1
     ERROR_MESSAGE="$1"
-    pm2 logs core-registry-cadt --nostream --lines 500
     cleanup
 }
 
@@ -862,7 +867,6 @@ chia wallet show
 #~~~ Transfer funds to test wallet ~~~ #
 transfer_funds_to_test_wallet
 #~~~ End Transfer funds to test wallet ~~~ #
-
 
 # Display datalayer subscriptions
 echo "Displaying datalayer subscriptions before starting core-registry-cadt"
