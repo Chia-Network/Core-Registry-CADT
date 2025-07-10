@@ -104,6 +104,9 @@ jobs:
 
           cat ~/.chia/mainnet/core-registry/config.yaml
 
+          # Clean up any existing PM2 processes with the same name
+          pm2 delete core-registry-cadt 2>/dev/null || true
+
       - name: Run tests
         run: bash tests/functional-tests.sh
         env:

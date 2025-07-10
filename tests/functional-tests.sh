@@ -518,14 +518,6 @@ test_create_home_org () {
         local home_org
         home_org=$(echo "$response" | jq -r 'to_entries[] | select(.value.isHome == true) | .key')
 
-        if (( $i >= $MAX_ATTEMPTS )); then
-            echo -e "\n${RED}Organization creation results after $TIMEOUT_SECONDS seconds:${NC}"
-            echo "Current organizations state:"
-            echo "$response" | jq '.'
-            fail_test "Organization creation verification timeout of $TIMEOUT_SECONDS seconds exceeded."
-            return
-        fi
-
         # If no home organization is found, fail immediately
         if [[ -z "$home_org" || "$home_org" == "null" ]]; then
             echo -e "\n${RED}No home organization found in response${NC}"
@@ -535,49 +527,60 @@ test_create_home_org () {
             return
         fi
 
-        if [[ -n "$home_org" && "$home_org" != "null" ]]; then
-            # Check if it's still pending
-            if [[ "$home_org" == "PENDING" ]]; then
-                echo -e "${RED}●${NC} Home organization creation is still pending - checking again in $CHECK_INTERVAL seconds"
-                sleep "$CHECK_INTERVAL"
-                ((i++))
-                continue
-            fi
-
-            # Check if the home org is fully ready
-            local is_subscribed
-            local is_synced
-            local org_uid
-            local registry_id
-
-            is_subscribed=$(echo "$response" | jq -r ".$home_org.subscribed")
-            is_synced=$(echo "$response" | jq -r ".$home_org.synced")
-            org_uid=$(echo "$response" | jq -r ".$home_org.orgUid")
-            registry_id=$(echo "$response" | jq -r ".$home_org.registryId")
-
-            if [[ "$is_subscribed" == "true" && "$is_synced" == "true" ]]; then
-                echo -e "\n${GREEN}=========================================="
-                echo -e "✓ Home organization successfully created and verified - TEST PASSED"
-                echo -e "===========================================${NC}\n"
-                echo "Home organization details:"
-                echo "  orgUid: $org_uid"
-                echo "  registryId: $registry_id"
-
-                # Store these values in global variables for use outside the function
-                HOME_ORG_UID="$org_uid"
-                HOME_REGISTRY_ID="$registry_id"
-
-                break
-            else
-                echo -e "${RED}●${NC} Home organization exists but not ready (subscribed: $is_subscribed, synced: $is_synced) - checking again in $CHECK_INTERVAL seconds"
-                sleep "$CHECK_INTERVAL"
-                ((i++))
-                continue
-            fi
-        else
-            echo -e "${RED}●${NC} No home organization found yet - checking again in $CHECK_INTERVAL seconds"
+        # Check if it's still pending
+        if [[ "$home_org" == "PENDING" ]]; then
+            echo -e "${RED}●${NC} Home organization creation is still pending - checking again in $CHECK_INTERVAL seconds"
             sleep "$CHECK_INTERVAL"
             ((i++))
+
+            # Check timeout after incrementing counter
+            if (( $i >= $MAX_ATTEMPTS )); then
+                echo -e "\n${RED}Organization creation results after $TIMEOUT_SECONDS seconds:${NC}"
+                echo "Current organizations state:"
+                echo "$response" | jq '.'
+                fail_test "Organization creation verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+                return
+            fi
+            continue
+        fi
+
+        # Check if the home org is fully ready
+        local is_subscribed
+        local is_synced
+        local org_uid
+        local registry_id
+
+        is_subscribed=$(echo "$response" | jq -r ".$home_org.subscribed")
+        is_synced=$(echo "$response" | jq -r ".$home_org.synced")
+        org_uid=$(echo "$response" | jq -r ".$home_org.orgUid")
+        registry_id=$(echo "$response" | jq -r ".$home_org.registryId")
+
+        if [[ "$is_subscribed" == "true" && "$is_synced" == "true" ]]; then
+            echo -e "\n${GREEN}=========================================="
+            echo -e "✓ Home organization successfully created and verified - TEST PASSED"
+            echo -e "===========================================${NC}\n"
+            echo "Home organization details:"
+            echo "  orgUid: $org_uid"
+            echo "  registryId: $registry_id"
+
+            # Store these values in global variables for use outside the function
+            HOME_ORG_UID="$org_uid"
+            HOME_REGISTRY_ID="$registry_id"
+
+            break
+        else
+            echo -e "${RED}●${NC} Home organization exists but not ready (subscribed: $is_subscribed, synced: $is_synced) - checking again in $CHECK_INTERVAL seconds"
+            sleep "$CHECK_INTERVAL"
+            ((i++))
+
+            # Check timeout after incrementing counter
+            if (( $i >= $MAX_ATTEMPTS )); then
+                echo -e "\n${RED}Organization creation results after $TIMEOUT_SECONDS seconds:${NC}"
+                echo "Current organizations state:"
+                echo "$response" | jq '.'
+                fail_test "Organization creation verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+                return
+            fi
             continue
         fi
     done
