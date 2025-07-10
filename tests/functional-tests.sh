@@ -100,35 +100,63 @@ wait_for_transaction() {
 check_wallet_balance() {
     local wallet_id="$1"
     local min_balance="$2"
+    local TIMEOUT_SECONDS=300  # 5 minutes
+    local CHECK_INTERVAL=5     # 5 seconds
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
 
-    echo "Checking wallet $wallet_id balance..."
-    local balance_response
-    balance_response=$(chia rpc wallet get_wallet_balances "{\"wallet_ids\": [$wallet_id]}")
-    if [[ $? -ne 0 ]]; then
-        fail_test "Failed to get wallet balance"
-        return
-    fi
+    echo "Checking wallet $wallet_id balance (will retry for up to $TIMEOUT_SECONDS seconds)..."
 
-    echo "[DEBUG] Balance response:"
-    echo "$balance_response"
+    i=0
+    while true; do
+        echo "[DEBUG] Balance check attempt $((i+1)) of $MAX_ATTEMPTS"
 
-    # Extract the confirmed wallet balance
-    local confirmed_balance
-    confirmed_balance=$(echo "$balance_response" | jq -r ".wallet_balances[\"$wallet_id\"].confirmed_wallet_balance")
-    if [[ $? -ne 0 ]]; then
-        fail_test "Failed to parse wallet balance"
-        return
-    fi
+        local balance_response
+        balance_response=$(chia rpc wallet get_wallet_balances "{\"wallet_ids\": [$wallet_id]}")
+        if [[ $? -ne 0 ]]; then
+            echo "[DEBUG] Failed to get wallet balance, will retry..."
+            sleep "$CHECK_INTERVAL"
+            if (( i >= MAX_ATTEMPTS )); then
+                fail_test "Failed to get wallet balance after $TIMEOUT_SECONDS seconds"
+                return
+            fi
+            ((i++))
+            continue
+        fi
 
-    echo "Wallet $wallet_id confirmed balance: $confirmed_balance mojos"
+        echo "[DEBUG] Balance response:"
+        echo "$balance_response"
 
-    # Check if balance is sufficient
-    if (( confirmed_balance < min_balance )); then
-        fail_test "Wallet $wallet_id balance ($confirmed_balance mojos) is insufficient. Need at least $min_balance mojos."
-        return
-    fi
+        # Extract the confirmed wallet balance
+        local confirmed_balance
+        confirmed_balance=$(echo "$balance_response" | jq -r ".wallet_balances[\"$wallet_id\"].confirmed_wallet_balance")
+        if [[ $? -ne 0 ]]; then
+            echo "[DEBUG] Failed to parse wallet balance, will retry..."
+            sleep "$CHECK_INTERVAL"
+            if (( i >= MAX_ATTEMPTS )); then
+                fail_test "Failed to parse wallet balance after $TIMEOUT_SECONDS seconds"
+                return
+            fi
+            ((i++))
+            continue
+        fi
 
-    echo -e "${GREEN}●${NC} Wallet $wallet_id has sufficient balance ($confirmed_balance mojos)"
+        echo "Wallet $wallet_id confirmed balance: $confirmed_balance mojos"
+
+        # Check if balance is sufficient
+        if (( confirmed_balance >= min_balance )); then
+            echo -e "${GREEN}●${NC} Wallet $wallet_id has sufficient balance ($confirmed_balance mojos)"
+            return 0
+        fi
+
+        if (( i >= MAX_ATTEMPTS )); then
+            fail_test "Wallet $wallet_id balance ($confirmed_balance mojos) is insufficient after $TIMEOUT_SECONDS seconds. Need at least $min_balance mojos."
+            return
+        fi
+
+        echo -e "${RED}●${NC} Wallet $wallet_id balance ($confirmed_balance mojos) insufficient - checking again in $CHECK_INTERVAL seconds"
+        sleep "$CHECK_INTERVAL"
+        ((i++))
+    done
 }
 
 # Check if any mirrors owned by us still exist. Wait until they're gone.
