@@ -726,6 +726,128 @@ make_api_call() {
     done
 }
 
+# Function to transfer funds to test wallet
+transfer_funds_to_test_wallet() {
+    echo "=== Transferring funds to test wallet ==="
+
+    # Get wallet address and store it in test_wallet_address variable
+    test_wallet_address=$(chia wallet get_address)
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to get wallet address"
+        return
+    fi
+    echo "Test wallet address: $test_wallet_address"
+
+    # Get wallet fingerprint
+    test_wallet_fingerprint=$(chia rpc wallet get_logged_in_fingerprint | jq -r '.fingerprint')
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to get wallet fingerprint"
+        return
+    fi
+    echo "Test wallet fingerprint: $test_wallet_fingerprint"
+
+    # Create mnemonic.txt file with TXCH_MNEMONIC environment variable
+    if [[ -z "$TXCH_MNEMONIC" ]]; then
+        fail_test "TXCH_MNEMONIC environment variable is not set. Please set it with a valid 24-word mnemonic phrase containing TXCH funds for testing."
+        return
+    fi
+
+    echo "$TXCH_MNEMONIC" > mnemonic.txt
+
+    # Import wallet with TXCH
+    chia keys add -f mnemonic.txt -l "txch-funds"
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to import TXCH wallet. Check that TXCH_MNEMONIC contains a valid 24-word mnemonic phrase."
+        return
+    fi
+
+    # Remove mnemonic.txt file
+    rm -f mnemonic.txt
+
+    # Get wallet fingerprints and store the one for the txch funds in txch_funds_wallet variable
+    echo "[DEBUG] Getting all wallet fingerprints..."
+    all_fingerprints_response=$(chia rpc wallet get_public_keys)
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to get wallet fingerprints"
+        return
+    fi
+
+    echo "[DEBUG] All fingerprints response:"
+    echo "$all_fingerprints_response"
+
+    # Check if response is empty or invalid
+    if [[ -z "$all_fingerprints_response" ]]; then
+        fail_test "Empty response from chia rpc wallet get_public_keys"
+        return
+    fi
+
+    # Extract the fingerprint that doesn't match test_wallet_fingerprint
+    txch_funds_fingerprint=$(echo "$all_fingerprints_response" | jq -r --arg exclude "$test_wallet_fingerprint" '.public_key_fingerprints[] | select(. != ($exclude | tonumber))')
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to parse wallet fingerprints with jq"
+        return
+    fi
+
+    # Check if we got a valid fingerprint
+    if [[ -z "$txch_funds_fingerprint" ]]; then
+        fail_test "No TXCH funds wallet fingerprint found"
+        return
+    fi
+
+    echo "TXCH funds wallet fingerprint: $txch_funds_fingerprint"
+
+    # Show balance of txch funds wallet
+    echo "Showing wallet to switch to txch funds wallet"
+    chia wallet show -f $txch_funds_fingerprint
+
+    # call function to check if wallet it synced
+    is_wallet_synced
+
+    # Show balance of txch funds wallet
+    echo "Showing balance now that we're sure the wallet is synced"
+    chia wallet show -f $txch_funds_fingerprint
+
+    # Transfer funds to test wallet
+    echo "Sending transaction to transfer 0.001 TXCH to test wallet ${test_wallet_address}"
+    transaction_id=$(chia rpc wallet send_transaction "{\"wallet_id\": 1, \"amount\": 1000000000, \"fee\": 0, \"memos\":[\"transfer to test wallet\"], \"address\": \"$test_wallet_address\"}" | jq -r '.transaction_id')
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to send transaction"
+        return
+    fi
+
+    echo "Transaction ID: $transaction_id"
+
+    # Wait for the transaction to be confirmed
+    wait_for_transaction "$transaction_id"
+
+    # Show balance of txch funds wallet
+    echo "Showing balance of txch funds wallet after transfer"
+    chia wallet show -f $txch_funds_fingerprint
+
+    # Show balance of test wallet
+    echo "Showing balance of test wallet after transfer - may need to wait for sync"
+    chia wallet show -f $test_wallet_fingerprint
+
+    # Check if wallet balance is greater than 100000000 mojos
+    check_wallet_balance 1 100000000
+
+    # call function to check if wallet it synced
+    is_wallet_synced
+
+    # Show balance of test wallet
+    echo "Showing balance of test wallet after sync"
+    chia wallet show -f $test_wallet_fingerprint
+
+    # Delete keys for txch funds wallet
+    chia keys delete -f $txch_funds_fingerprint
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to delete TXCH funds wallet keys"
+        return
+    fi
+
+    echo "=== Funds transfer completed successfully ==="
+}
+
 #~~~ Start Chia ~~~ #
 
 chia start wallet data
@@ -738,125 +860,9 @@ is_wallet_synced
 chia wallet show
 
 #~~~ Transfer funds to test wallet ~~~ #
+transfer_funds_to_test_wallet
+#~~~ End Transfer funds to test wallet ~~~ #
 
-# Get wallet address and store it in test_wallet_address variable
-test_wallet_address=$(chia wallet get_address)
-if [[ $? -ne 0 ]]; then
-    fail_test "Failed to get wallet address"
-    return
-fi
-echo "Test wallet address: $test_wallet_address"
-
-
-# Get wallet fingerprint
-test_wallet_fingerprint=$(chia rpc wallet get_logged_in_fingerprint | jq -r '.fingerprint')
-if [[ $? -ne 0 ]]; then
-    fail_test "Failed to get wallet fingerprint"
-    return
-fi
-echo "Test wallet fingerprint: $test_wallet_fingerprint"
-
-# Create mnemonic.txt file with TXCH_MNEMONIC environment variable
-if [[ -z "$TXCH_MNEMONIC" ]]; then
-    fail_test "TXCH_MNEMONIC environment variable is not set. Please set it with a valid 24-word mnemonic phrase containing TXCH funds for testing."
-    return
-fi
-
-echo "$TXCH_MNEMONIC" > mnemonic.txt
-
-
-# Import wallet with TXCH
-chia keys add -f mnemonic.txt -l "txch-funds"
-if [[ $? -ne 0 ]]; then
-    fail_test "Failed to import TXCH wallet. Check that TXCH_MNEMONIC contains a valid 24-word mnemonic phrase."
-    return
-fi
-
-# Remove mnemonic.txt file
-rm -f mnemonic.txt
-
-# Get wallet fingerprints and store the one for the txch funds in txch_funds_wallet variable
-echo "[DEBUG] Getting all wallet fingerprints..."
-all_fingerprints_response=$(chia rpc wallet get_public_keys)
-if [[ $? -ne 0 ]]; then
-    fail_test "Failed to get wallet fingerprints"
-    return
-fi
-
-echo "[DEBUG] All fingerprints response:"
-echo "$all_fingerprints_response"
-
-# Check if response is empty or invalid
-if [[ -z "$all_fingerprints_response" ]]; then
-    fail_test "Empty response from chia rpc wallet get_public_keys"
-    return
-fi
-
-# Extract the fingerprint that doesn't match test_wallet_fingerprint
-txch_funds_fingerprint=$(echo "$all_fingerprints_response" | jq -r --arg exclude "$test_wallet_fingerprint" '.public_key_fingerprints[] | select(. != ($exclude | tonumber))')
-if [[ $? -ne 0 ]]; then
-    fail_test "Failed to parse wallet fingerprints with jq"
-    return
-fi
-
-# Check if we got a valid fingerprint
-if [[ -z "$txch_funds_fingerprint" ]]; then
-    fail_test "No TXCH funds wallet fingerprint found"
-    return
-fi
-
-echo "TXCH funds wallet fingerprint: $txch_funds_fingerprint"
-
-# Show balance of txch funds wallet
-echo "Showing wallet to switch to txch funds wallet"
-chia wallet show -f $txch_funds_fingerprint
-
-# call function to check if wallet it synced
-is_wallet_synced
-
-# Show balance of txch funds wallet
-echo "Showing balance now that we're sure the wallet is synced"
-chia wallet show -f $txch_funds_fingerprint
-
-# Transfer funds to test wallet
-#chia wallet send -f $txch_funds_fingerprint -a 0.001 -t $test_wallet_address -m 0
-
-echo "Sending transaction to transfer 0.001 TXCH to test wallet ${test_wallet_address}"
-transaction_id=$(chia rpc wallet send_transaction "{\"wallet_id\": 1, \"amount\": 1000000000, \"fee\": 0, \"memos\":[\"transfer to test wallet\"], \"address\": \"$test_wallet_address\"}" | jq -r '.transaction_id')
-if [[ $? -ne 0 ]]; then
-    fail_test "Failed to send transaction"
-    return
-fi
-
-echo "Transaction ID: $transaction_id"
-
-# Wait for the transaction to be confirmed
-wait_for_transaction "$transaction_id"
-
-# Show balance of txch funds wallet
-echo "Showing balance of txch funds wallet after transfer"
-chia wallet show -f $txch_funds_fingerprint
-
-# Show balance of test wallet
-echo "Showing balance of test wallet after transfer - may need to wait for sync"
-chia wallet show -f $test_wallet_fingerprint
-
-# Check if wallet balance is greater than 100000000 mojos
-check_wallet_balance 1 100000000
-
-# call function to check if wallet it synced
-is_wallet_synced
-
-# Show balance of test wallet
-echo "Showing balance of test wallet after sync"
-chia wallet show -f $test_wallet_fingerprint
-
-# Delete keys for txch funds wallet
-chia keys delete -f $txch_funds_fingerprint
-if [[ $? -ne 0 ]]; then
-    fail_test "Failed to delete TXCH funds wallet keys"
-    return
-fi
 
 # Display datalayer subscriptions
 echo "Displaying datalayer subscriptions before starting core-registry-cadt"
