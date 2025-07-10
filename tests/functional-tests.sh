@@ -244,20 +244,48 @@ cleanup () {
     echo "Saving pm2 logs to file..."
     local log_file="core-registry-cadt.log"
 
-    # Get the full log history by reading the log file directly
+    # Clear the log file first
+    > "$log_file"
+
+    # Get the full log history by reading the log files directly
     if pm2 describe core-registry-cadt > /dev/null 2>&1; then
-        # Get the log file path from pm2
-        local pm2_log_path=$(pm2 describe core-registry-cadt | grep -o '/.*\.log' | head -1)
-        if [[ -n "$pm2_log_path" && -f "$pm2_log_path" ]]; then
-            echo "Copying full log history from: $pm2_log_path"
-            cp "$pm2_log_path" "$log_file"
-        else
-            echo "PM2 log file not found, getting recent logs only"
-            pm2 logs core-registry-cadt --nostream > "$log_file" 2>&1
+        echo "PM2 process found, collecting all available logs..."
+
+        # Get both stdout and error log paths
+        local pm2_out_log=$(pm2 describe core-registry-cadt | grep -o '/.*out\.log' | head -1)
+        local pm2_error_log=$(pm2 describe core-registry-cadt | grep -o '/.*error\.log' | head -1)
+
+        if [[ -n "$pm2_out_log" && -f "$pm2_out_log" ]]; then
+            echo "Copying stdout log from: $pm2_out_log"
+            echo "=== STDOUT LOG ===" >> "$log_file"
+            cat "$pm2_out_log" >> "$log_file"
+            echo "" >> "$log_file"
         fi
+
+        if [[ -n "$pm2_error_log" && -f "$pm2_error_log" ]]; then
+            echo "Copying error log from: $pm2_error_log"
+            echo "=== ERROR LOG ===" >> "$log_file"
+            cat "$pm2_error_log" >> "$log_file"
+            echo "" >> "$log_file"
+        fi
+
+        # Also try to get recent logs from pm2 logs command
+        echo "=== RECENT PM2 LOGS ===" >> "$log_file"
+        pm2 logs core-registry-cadt --nostream --lines 100 >> "$log_file" 2>&1
+        echo "" >> "$log_file"
+
     else
         echo "PM2 process not found, getting recent logs only"
-        pm2 logs core-registry-cadt --nostream > "$log_file" 2>&1
+        echo "=== PM2 LOGS (PROCESS NOT FOUND) ===" >> "$log_file"
+        pm2 logs core-registry-cadt --nostream --lines 100 >> "$log_file" 2>&1
+    fi
+
+    # Also capture any application logs from the CADT directory
+    local cadt_log_dir="$HOME/.chia/mainnet/core-registry/cadt"
+    if [[ -d "$cadt_log_dir" ]]; then
+        echo "=== CADT APPLICATION LOGS ===" >> "$log_file"
+        find "$cadt_log_dir" -name "*.log" -type f -exec cat {} \; >> "$log_file" 2>/dev/null || true
+        echo "" >> "$log_file"
     fi
 
     echo "PM2 logs saved to: $log_file"
@@ -465,7 +493,7 @@ test_create_home_org () {
         fi
 
         echo "[DEBUG] Organizations check response:"
-        echo "$response"
+        echo "$response" | jq '.'
 
         # Check if response is valid JSON
         if ! echo "$response" | jq empty > /dev/null 2>&1; then
