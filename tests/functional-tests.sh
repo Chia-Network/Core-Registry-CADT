@@ -240,7 +240,23 @@ cleanup () {
     # Save pm2 logs to file regardless of test outcome
     echo "Saving pm2 logs to file..."
     local log_file="core-registry-cadt.log"
-    pm2 logs core-registry-cadt --nostream > "$log_file" 2>&1
+
+    # Get the full log history by reading the log file directly
+    if pm2 describe core-registry-cadt > /dev/null 2>&1; then
+        # Get the log file path from pm2
+        local pm2_log_path=$(pm2 describe core-registry-cadt | grep -o '/.*\.log' | head -1)
+        if [[ -n "$pm2_log_path" && -f "$pm2_log_path" ]]; then
+            echo "Copying full log history from: $pm2_log_path"
+            cp "$pm2_log_path" "$log_file"
+        else
+            echo "PM2 log file not found, getting recent logs only"
+            pm2 logs core-registry-cadt --nostream > "$log_file" 2>&1
+        fi
+    else
+        echo "PM2 process not found, getting recent logs only"
+        pm2 logs core-registry-cadt --nostream > "$log_file" 2>&1
+    fi
+
     echo "PM2 logs saved to: $log_file"
 
     # Stop the core-registry-cadt
