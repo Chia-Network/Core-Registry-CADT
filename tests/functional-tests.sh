@@ -863,8 +863,59 @@ make_api_call() {
     done
 }
 
-# Function to transfer funds to test wallet
-transfer_funds_to_test_wallet() {
+# Function to split coins in the wallet
+split_coins() {
+    echo "=== Splitting coins in wallet ==="
+
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
+    echo "Splitting largest coin into 30 coins of 0.000035 TXCH each..."
+
+    # Run the chia-tools split command
+    local split_result
+    split_result=$(chia-tools coins split-largest -m 0 -n 30 -a 0.0003)
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to split coins: $split_result"
+        return
+    fi
+
+    echo "[DEBUG] Split coins response:"
+    echo "$split_result"
+
+    # Extract transaction ID from the log output
+    # The output format is: TRANSACTION_ID=0eccadc2c16437df8d5047606b126e5e8d19cd8486b687471ae425a9779f568f
+    local transaction_id
+    transaction_id=$(echo "$split_result" | grep -o 'TRANSACTION_ID=[a-f0-9]*' | cut -d'=' -f2)
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to parse transaction ID from split response"
+        return
+    fi
+
+    if [[ -z "$transaction_id" ]]; then
+        fail_test "No transaction ID found in split response"
+        return
+    fi
+
+    # Add 0x prefix if not already present
+    if [[ ! "$transaction_id" =~ ^0x ]]; then
+        transaction_id="0x$transaction_id"
+    fi
+
+    echo "Split transaction ID: $transaction_id"
+
+    # Wait for the split transaction to be confirmed
+    wait_for_transaction "$transaction_id"
+
+    # Show wallet balance after split
+    echo "Showing wallet balance after coin split:"
+    chia wallet show
+
+    echo "=== Coin split completed successfully ==="
+}
+0003
     echo "=== Transferring funds to test wallet ==="
 
     # Get wallet address and store it in test_wallet_address variable
@@ -946,7 +997,7 @@ transfer_funds_to_test_wallet() {
 
     # Transfer funds to test wallet
     echo "Sending transaction to transfer 0.001 TXCH to test wallet ${test_wallet_address}"
-    transaction_id=$(chia rpc wallet send_transaction "{\"wallet_id\": 1, \"amount\": 1000000000, \"fee\": 0, \"memos\":[\"transfer to test wallet\"], \"address\": \"$test_wallet_address\"}" | jq -r '.transaction_id')
+    transaction_id=$(chia rpc wallet send_transaction "{\"wallet_id\": 1, \"amount\": 9000000000, \"fee\": 0, \"memos\":[\"transfer to test wallet\"], \"address\": \"$test_wallet_address\"}" | jq -r '.transaction_id')
     if [[ $? -ne 0 ]]; then
         fail_test "Failed to send transaction"
         return
@@ -998,7 +1049,9 @@ chia wallet show
 
 #~~~ Transfer funds to test wallet ~~~ #
 transfer_funds_to_test_wallet
-#~~~ End Transfer funds to test wallet ~~~ #
+
+#~~~ Split coins ~~~ #
+split_coins
 
 # Display datalayer subscriptions
 echo "Displaying datalayer subscriptions before starting core-registry-cadt"
