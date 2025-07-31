@@ -759,34 +759,154 @@ test_create_project () {
     done
 }
 
-# Test 4: Add a unit
+# Test 4: Add a Project
+test_add_project () {
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
+    local TIMEOUT_SECONDS=60
+    local CHECK_INTERVAL=10
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
+    local PROJECTS_ENDPOINT="http://localhost:31310/v1/projects"
+    local STAGING_ENDPOINT="http://localhost:31310/v1/staging"
+    local response
+    local project_uuid
+
+    echo "Testing project addition... (this can take up to $TIMEOUT_SECONDS seconds)"
+
+    # Create project with "Temporary Auto-created Test Data" name
+    echo "[DEBUG] Creating new project with temporary test data..."
+    response=$(make_api_call "curl -s --location -g --request POST '$PROJECTS_ENDPOINT' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{
+            \"projectName\": \"Temporary Auto-created Test Data\",
+            \"projectId\": \"TEMP-AUTO-001\",
+            \"projectDeveloper\": \"Temporary Auto-created Test Data\",
+            \"program\": null,
+            \"projectLink\": \"https://observer.climateactiondata.org/\",
+            \"sector\": \"Agriculture; forestry and fishing\",
+            \"projectType\": \"Afforestation\",
+            \"projectStatus\": \"Registered\",
+            \"projectStatusDate\": \"2025-01-28T05:00:00.000Z\",
+            \"coveredByNDC\": \"Outside NDC\",
+            \"ndcInformation\": \"Temporary Auto-created Test Data\",
+            \"currentRegistry\": \"American Carbon Registry (ACR)\",
+            \"registryOfOrigin\": \"American Carbon Registry (ACR)\",
+            \"originProjectId\": \"TEMP-AUTO-001\",
+            \"unitMetric\": \"tCO2e\",
+            \"methodology\": \"ACR - Afforestation and Reforestation of Degraded Lands\",
+            \"validationBody\": null,
+            \"validationDate\": null,
+            \"projectTags\": null,
+            \"issuances\": [
+                {
+                    \"startDate\": \"2025-02-03T05:00:00.000Z\",
+                    \"endDate\": \"2025-02-28T05:00:00.000Z\",
+                    \"verificationApproach\": \"Temporary Auto-created Test Data\",
+                    \"verificationBody\": \"Temporary Auto-created Test Data\",
+                    \"verificationReportDate\": \"2025-02-14T05:00:00.000Z\"
+                }
+            ],
+            \"projectLocations\": [
+                {
+                    \"country\": \"Canada\",
+                    \"geographicIdentifier\": \"Temporary Auto-created Test Data Location\",
+                    \"inCountryRegion\": \"Ontario\",
+                    \"fileId\": \"\"
+                }
+            ]
+        }'")
+
+    echo "[DEBUG] Create project response:"
+    echo "$response"
+
+    # Check if creation was successful
+    if ! echo "$response" | jq -e '.success == true' > /dev/null; then
+        fail_test "Failed to create project: $(echo "$response" | jq -r '.message // "Unknown error"')"
+        return
+    fi
+
+    # Store the UUID
+    project_uuid=$(echo "$response" | jq -r '.uuid')
+    echo "[DEBUG] Project created with UUID: $project_uuid"
+
+    # Verify project appears in staging
+    echo "Verifying project appears in staging..."
+    i=0
+    while true; do
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+
+        # Get staging entries
+        response=$(make_api_call "curl -s --location --request GET '$STAGING_ENDPOINT' \
+            --header 'Content-Type: application/json'")
+        if [[ $? -ne 0 ]]; then
+            fail_test "Failed to get staging entries"
+            return
+        fi
+
+        # Check if our project UUID exists in staging
+        if echo "$response" | jq -e --arg uuid "$project_uuid" '.[] | select(.uuid == $uuid)' > /dev/null; then
+            echo -e "\n${GREEN}=========================================="
+            echo -e "✓ Project successfully created and found in staging - TEST PASSED"
+            echo -e "===========================================${NC}\n"
+            track_test_result "Project Addition" "PASS"
+            break
+        fi
+
+        if (( i >= MAX_ATTEMPTS )); then
+            echo -e "\n${RED}Project creation results after $TIMEOUT_SECONDS seconds:${NC}"
+            echo "Expected project UUID: $project_uuid"
+            echo "Current staging state:"
+            echo "$response" | jq '.'
+            track_test_result "Project Addition" "FAIL"
+            fail_test "Project staging verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+            return
+        fi
+
+        echo -e "${RED}●${NC} Project not yet found in staging - checking again in $CHECK_INTERVAL seconds"
+        sleep "$CHECK_INTERVAL"
+        ((i++))
+    done
+}
+
+# Test 5: Add a Unit
 test_add_unit () {
     # First verify wallet is synced
     if ! is_wallet_synced; then
         return
     fi
 
+    local TIMEOUT_SECONDS=60
+    local CHECK_INTERVAL=10
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
     local UNITS_ENDPOINT="http://localhost:31310/v1/units"
+    local STAGING_ENDPOINT="http://localhost:31310/v1/staging"
     local response
     local unit_uuid
 
-    echo "Testing unit creation..."
+    echo "Testing unit addition... (this can take up to $TIMEOUT_SECONDS seconds)"
 
-    # Create unit
-    echo "[DEBUG] Creating new unit..."
+    # Create unit with "Temporary Auto-created Test Data" name
+    echo "[DEBUG] Creating new unit with temporary test data..."
     response=$(make_api_call "curl -s --location -g --request POST '$UNITS_ENDPOINT' \
         --header 'Content-Type: application/json' \
         --data-raw '{
-            \"projectLocationId\": \"ID_USA\",
-            \"unitOwner\": \"Chia\",
-            \"countryJurisdictionOfOwner\": \"Andorra\",
-            \"vintageYear\": 1998,
+            \"projectLocationId\": \"TEMP-AUTO-LOC-001\",
+            \"unitOwner\": \"Temporary Auto-created Test Data\",
+            \"countryJurisdictionOfOwner\": \"Canada\",
+            \"inCountryJurisdictionOfOwner\": \"Ontario\",
+            \"vintageYear\": 2024,
             \"unitType\": \"Removal - technical\",
+            \"marketplace\": \"Temporary Auto-created Test Data Marketplace\",
+            \"marketplaceLink\": \"https://observer.climateactiondata.org/\",
+            \"marketplaceIdentifier\": \"TEMP-AUTO-001\",
+            \"unitTags\": \"Temporary Auto-created Test Data\",
             \"unitStatus\": \"Held\",
-            \"unitBlockStart\": \"abc123\",
-            \"unitBlockEnd\": \"bcd456\",
-            \"unitCount\": 200,
-            \"unitRegistryLink\": \"http://climateWarehouse.com/myRegistry\",
+            \"unitStatusReason\": null,
+            \"unitCount\": 100,
+            \"unitRegistryLink\": \"https://observer.climateactiondata.org/\",
             \"correspondingAdjustmentDeclaration\": \"Unknown\",
             \"correspondingAdjustmentStatus\": \"Not Started\"
         }'")
@@ -800,15 +920,81 @@ test_add_unit () {
         return
     fi
 
-    # Store the UUID for potential future use
+    # Store the UUID
     unit_uuid=$(echo "$response" | jq -r '.uuid')
+    echo "[DEBUG] Unit created with UUID: $unit_uuid"
 
-    echo -e "\n${GREEN}=========================================="
-    echo -e "✓ Unit successfully created with UUID: $unit_uuid - TEST PASSED"
-    echo -e "===========================================${NC}\n"
+    # Verify unit appears in staging
+    echo "Verifying unit appears in staging..."
+    i=0
+    while true; do
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+
+        # Get staging entries
+        response=$(make_api_call "curl -s --location --request GET '$STAGING_ENDPOINT' \
+            --header 'Content-Type: application/json'")
+        if [[ $? -ne 0 ]]; then
+            fail_test "Failed to get staging entries"
+            return
+        fi
+
+        # Check if our unit UUID exists in staging
+        if echo "$response" | jq -e --arg uuid "$unit_uuid" '.[] | select(.uuid == $uuid)' > /dev/null; then
+            echo -e "\n${GREEN}=========================================="
+            echo -e "✓ Unit successfully created and found in staging - TEST PASSED"
+            echo -e "===========================================${NC}\n"
+            track_test_result "Unit Addition" "PASS"
+            break
+        fi
+
+        if (( i >= MAX_ATTEMPTS )); then
+            echo -e "\n${RED}Unit creation results after $TIMEOUT_SECONDS seconds:${NC}"
+            echo "Expected unit UUID: $unit_uuid"
+            echo "Current staging state:"
+            echo "$response" | jq '.'
+            track_test_result "Unit Addition" "FAIL"
+            fail_test "Unit staging verification timeout of $TIMEOUT_SECONDS seconds exceeded."
+            return
+        fi
+
+        echo -e "${RED}●${NC} Unit not yet found in staging - checking again in $CHECK_INTERVAL seconds"
+        sleep "$CHECK_INTERVAL"
+        ((i++))
+    done
 }
 
-# Test 5: Delete home organization
+# Test 6: Read Organizations
+test_read_orgs () {
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
+    local ORGANIZATIONS_ENDPOINT="http://localhost:31310/v1/organizations"
+    local response
+
+    echo "Testing organizations read..."
+
+    # Get organizations
+    echo "[DEBUG] Reading organizations from CADT..."
+    response=$(make_api_call "curl -s --location --request GET '$ORGANIZATIONS_ENDPOINT' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to get organizations"
+        return
+    fi
+
+    echo "[DEBUG] Organizations response:"
+    echo "$response" | jq '.'
+
+    echo -e "\n${GREEN}=========================================="
+    echo -e "✓ Organizations successfully read - TEST PASSED"
+    echo -e "===========================================${NC}\n"
+    track_test_result "Organizations Read" "PASS"
+}
+
+# Test 7: Delete home organization
 test_delete_home_org () {
     # First verify wallet is synced
     if ! is_wallet_synced; then
@@ -1110,8 +1296,18 @@ transfer_funds_to_test_wallet() {
     track_test_result "Funds Transfer" "PASS"
 }
 
-#~~~ Start Chia ~~~ #
+#~~~              ~~~ #
+#~~~ Main Program ~~~ #
+#~~~              ~~~ #
 
+# Start Chia
+chia start wallet data data_layer_http
+sleep 5
+
+# Check health endpoint
+check_health_endpoint
+
+# Start Chia
 chia start wallet data data_layer_http
 sleep 5
 
@@ -1121,10 +1317,10 @@ is_wallet_synced
 # Display wallet
 chia wallet show
 
-#~~~ Transfer funds to test wallet ~~~ #
+# Transfer funds to test wallet
 transfer_funds_to_test_wallet
 
-#~~~ Split coins ~~~ #
+# Split coins
 split_coins
 
 # Display datalayer subscriptions
@@ -1148,10 +1344,16 @@ test_create_home_org
 # Test 3: Create and verify a project
 test_create_project
 
-# Test 4: Add a unit
-#test_add_unit
+# Test 4: Add a Project
+test_add_project
 
-# Test 5: Delete home organization (do this last)
+# Test 5: Add a Unit
+test_add_unit
+
+# Test 6: Read Organizations
+test_read_orgs
+
+# Test 7: Delete home organization (do this last)
 test_delete_home_org
 
 # If we got here with no failures, run cleanup and exit successfully
