@@ -40,10 +40,14 @@ is_wallet_synced () {
 
     i=0
     while true; do
-        echo "[DEBUG] Running wallet sync status check..."
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Running wallet sync status check..."
+        fi
         local response=$(chia rpc wallet get_sync_status)
-        echo "[DEBUG] Raw wallet sync response:"
-        echo "$response"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Raw wallet sync response:"
+            echo "$response"
+        fi
 
         # Check if wallet is synced by comparing the synced field to true
         if echo "$response" | jq -e '.synced == true' > /dev/null; then
@@ -70,21 +74,27 @@ wait_for_transaction() {
 
     i=0
     while true; do
-        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        fi
 
         # Get transaction status
         local response
         response=$(chia rpc wallet get_transaction "{\"transaction_id\": \"$transaction_id\"}")
 
         if [[ $? -ne 0 ]]; then
-            echo "[DEBUG] Failed to get transaction status"
-            echo "[DEBUG] Response: $response"
+            if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                echo "[DEBUG] Failed to get transaction status"
+                echo "[DEBUG] Response: $response"
+            fi
             fail_test "Failed to get transaction status. This usually means the transaction ID is invalid or empty."
             return 1
         fi
 
-        echo "[DEBUG] Transaction response:"
-        echo "$response"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Transaction response:"
+            echo "$response"
+        fi
 
         # Check if transaction is confirmed
         if echo "$response" | jq -e '.transaction.confirmed == true' > /dev/null; then
@@ -115,12 +125,16 @@ check_wallet_balance() {
 
     i=0
     while true; do
-        echo "[DEBUG] Balance check attempt $((i+1)) of $MAX_ATTEMPTS"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Balance check attempt $((i+1)) of $MAX_ATTEMPTS"
+        fi
 
         local balance_response
         balance_response=$(chia rpc wallet get_wallet_balances "{\"wallet_ids\": [$wallet_id]}")
         if [[ $? -ne 0 ]]; then
-            echo "[DEBUG] Failed to get wallet balance, will retry..."
+            if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                echo "[DEBUG] Failed to get wallet balance, will retry..."
+            fi
             sleep "$CHECK_INTERVAL"
             if (( i >= MAX_ATTEMPTS )); then
                 fail_test "Failed to get wallet balance after $TIMEOUT_SECONDS seconds"
@@ -130,14 +144,18 @@ check_wallet_balance() {
             continue
         fi
 
-        echo "[DEBUG] Balance response:"
-        echo "$balance_response"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Balance response:"
+            echo "$balance_response"
+        fi
 
         # Extract the confirmed wallet balance
         local confirmed_balance
         confirmed_balance=$(echo "$balance_response" | jq -r ".wallet_balances[\"$wallet_id\"].confirmed_wallet_balance")
         if [[ $? -ne 0 ]]; then
-            echo "[DEBUG] Failed to parse wallet balance, will retry..."
+            if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                echo "[DEBUG] Failed to parse wallet balance, will retry..."
+            fi
             sleep "$CHECK_INTERVAL"
             if (( i >= MAX_ATTEMPTS )); then
                 fail_test "Failed to parse wallet balance after $TIMEOUT_SECONDS seconds"
@@ -208,34 +226,48 @@ check_health_endpoint () {
         local all_services_running=true
         local cadt_healthy=false
 
-        echo "[DEBUG] Health check attempt $((attempt + 1)) of $max_attempts"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Health check attempt $((attempt + 1)) of $max_attempts"
+        fi
 
         # Check Chia services
         for service in "${services[@]}"; do
-            echo "[DEBUG] Checking if $service is running..."
+            if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                echo "[DEBUG] Checking if $service is running..."
+            fi
 
             # Use the Chia daemon RPC is_running endpoint
             local response=$(chia rpc daemon is_running "{\"service\": \"$service\"}" 2>/dev/null)
 
             if [[ $? -eq 0 ]] && echo "$response" | jq -e '.is_running == true' > /dev/null 2>&1; then
-                echo "[DEBUG] ✓ $service is running"
+                if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                    echo "[DEBUG] ✓ $service is running"
+                fi
             else
-                echo "[DEBUG] ✗ $service is not running"
+                if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                    echo "[DEBUG] ✗ $service is not running"
+                fi
                 all_services_running=false
             fi
         done
 
         # Check core-registry-cadt health endpoint
         if [[ "$all_services_running" == "true" ]]; then
-            echo "[DEBUG] Checking core-registry-cadt health endpoint..."
+            if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                echo "[DEBUG] Checking core-registry-cadt health endpoint..."
+            fi
             local health_response=$(curl -s http://127.0.0.1:31310/health 2>/dev/null)
 
             if [[ $? -eq 0 ]] && echo "$health_response" | jq -e '.message == "OK"' > /dev/null 2>&1; then
-                echo "[DEBUG] ✓ core-registry-cadt health endpoint responding OK"
+                if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                    echo "[DEBUG] ✓ core-registry-cadt health endpoint responding OK"
+                fi
                 cadt_healthy=true
             else
-                echo "[DEBUG] ✗ core-registry-cadt health endpoint not responding OK"
-                echo "[DEBUG] Health response: $health_response"
+                if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                    echo "[DEBUG] ✗ core-registry-cadt health endpoint not responding OK"
+                    echo "[DEBUG] Health response: $health_response"
+                fi
             fi
         fi
 
@@ -428,7 +460,9 @@ test_subscriptions () {
     local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
 
     echo "Testing DataLayer subscriptions... (this can take up to $TIMEOUT_SECONDS seconds)"
-    echo "[DEBUG] Will check every $CHECK_INTERVAL seconds, up to $MAX_ATTEMPTS times"
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Will check every $CHECK_INTERVAL seconds, up to $MAX_ATTEMPTS times"
+    fi
 
     # Print out the expected subscription IDs we're looking for
     echo -e "\n${BLUE}Looking for these expected subscription IDs:${NC}"
@@ -443,13 +477,17 @@ test_subscriptions () {
 
     i=0
     while true; do
-        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        fi
 
 
         # Get current subscriptions
         current_subscriptions=$(chia rpc data_layer subscriptions | jq -r '.store_ids[]')
-        echo "[DEBUG] Current subscriptions response:"
-        echo "$current_subscriptions"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Current subscriptions response:"
+            echo "$current_subscriptions"
+        fi
 
         missing_subs=0
         found_ids=()
@@ -465,7 +503,9 @@ test_subscriptions () {
             fi
         done
 
-        echo "[DEBUG] Found ${#found_ids[@]} subscriptions, missing ${#missing_ids[@]} subscriptions"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Found ${#found_ids[@]} subscriptions, missing ${#missing_ids[@]} subscriptions"
+        fi
 
         if (( missing_subs == 0 )); then
             echo -e "\n${GREEN}=========================================="
@@ -501,18 +541,24 @@ check_home_org () {
     local response
     local home_orgs
 
-    echo "[DEBUG] Checking for home organizations..."
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Checking for home organizations..."
+    fi
 
     # Get organizations and store response
     response=$(make_api_call "curl -s --location --request GET '$ENDPOINT' --header 'Content-Type: application/json'")
     if [[ $? -ne 0 ]]; then
-        echo "[DEBUG] curl request failed"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] curl request failed"
+        fi
         fail_test "Failed to fetch organizations from $ENDPOINT"
         return 1
     fi
 
-    echo "[DEBUG] Organizations response:"
-    echo "$response"
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Organizations response:"
+        echo "$response"
+    fi
 
     # If response is empty or just {}, no organizations exist
     if [[ -z "$response" ]] || [[ "$response" == "{}" ]]; then
@@ -523,7 +569,9 @@ check_home_org () {
     # Count organizations with isHome=true
     home_orgs=$(echo "$response" | jq '[.[] | select(.isHome == true)] | length')
     if [[ $? -ne 0 ]]; then
-        echo "[DEBUG] Failed to parse organizations response with jq"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Failed to parse organizations response with jq"
+        fi
         fail_test "Failed to parse organizations response"
         return 1
     fi
@@ -534,8 +582,10 @@ check_home_org () {
     else
         echo -e "${RED}●${NC} Found $home_orgs home organization(s)"
         # Get the orgUids of home orgs for debugging
-        echo "[DEBUG] Home organization UIDs:"
-        echo "$response" | jq -r '.[] | select(.isHome == true) | .orgUid'
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Home organization UIDs:"
+            echo "$response" | jq -r '.[] | select(.isHome == true) | .orgUid'
+        fi
         return 1
     fi
 }
@@ -561,7 +611,9 @@ test_create_home_org () {
     fi
 
     # Create home organization
-    echo "[DEBUG] Creating home organization..."
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Creating home organization..."
+    fi
     local response
     response=$(make_api_call "curl -s --location -g --request POST '$CREATE_ENDPOINT' \
         --header 'Content-Type: application/json' \
@@ -570,8 +622,10 @@ test_create_home_org () {
             \"icon\": \"https://www.chia.net/wp-content/uploads/2023/01/chia-logo-dark.svg\"
         }'")
 
-    echo "[DEBUG] Create organization response:"
-    echo "$response"
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Create organization response:"
+        echo "$response"
+    fi
 
     # Check if creation was successful
     if ! echo "$response" | jq -e '.success == true' > /dev/null; then
@@ -583,11 +637,15 @@ test_create_home_org () {
     echo "Waiting for organization to be set as home organization..."
     i=0
     while true; do
-        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        fi
 
         # Show owned stores status
-        echo "[DEBUG] Current owned stores:"
-        chia data get_owned_stores
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Current owned stores:"
+            chia data get_owned_stores
+        fi
 
         # Get current organizations
         response=$(make_api_call "curl -s --location --request GET 'http://localhost:31310/v1/organizations' \
@@ -597,13 +655,17 @@ test_create_home_org () {
             return
         fi
 
-        echo "[DEBUG] Organizations check response:"
-        echo "$response" | jq '.'
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Organizations check response:"
+            echo "$response" | jq '.'
+        fi
 
         # Check if response is valid JSON
         if ! echo "$response" | jq empty > /dev/null 2>&1; then
-            echo "[DEBUG] Invalid JSON response received"
-            echo "[DEBUG] Response content: $response"
+            if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+                echo "[DEBUG] Invalid JSON response received"
+                echo "[DEBUG] Response content: $response"
+            fi
             sleep "$CHECK_INTERVAL"
             ((i++))
             continue
@@ -711,7 +773,9 @@ test_create_project () {
     echo "Testing project creation... (this can take up to $TIMEOUT_SECONDS seconds)"
 
     # Create project
-    echo "[DEBUG] Creating new project..."
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Creating new project..."
+    fi
     response=$(make_api_call "curl -s --location -g --request POST '$PROJECTS_ENDPOINT' \
         --header 'Content-Type: application/json' \
         --data-raw '{
@@ -823,7 +887,9 @@ test_add_project () {
     echo "Testing project addition... (this can take up to $TIMEOUT_SECONDS seconds)"
 
     # Create project with "Temporary Auto-created Test Data" name
-    echo "[DEBUG] Creating new project with temporary test data..."
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Creating new project with temporary test data..."
+    fi
     response=$(make_api_call "curl -s --location -g --request POST '$PROJECTS_ENDPOINT' \
         --header 'Content-Type: application/json' \
         --data-raw '{
@@ -935,7 +1001,9 @@ test_add_unit () {
     echo "Testing unit addition... (this can take up to $TIMEOUT_SECONDS seconds)"
 
     # Create unit with "Temporary Auto-created Test Data" name
-    echo "[DEBUG] Creating new unit with temporary test data..."
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Creating new unit with temporary test data..."
+    fi
     response=$(make_api_call "curl -s --location -g --request POST '$UNITS_ENDPOINT' \
         --header 'Content-Type: application/json' \
         --data-raw '{
@@ -1022,7 +1090,9 @@ test_read_orgs () {
     echo "Testing organizations read..."
 
     # Get organizations
-    echo "[DEBUG] Reading organizations from CADT..."
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Reading organizations from CADT..."
+    fi
     response=$(make_api_call "curl -s --location --request GET '$ORGANIZATIONS_ENDPOINT' \
         --header 'Content-Type: application/json'")
 
@@ -1031,8 +1101,10 @@ test_read_orgs () {
         return
     fi
 
-    echo "[DEBUG] Organizations response:"
-    echo "$response" | jq '.'
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Organizations response:"
+        echo "$response" | jq '.'
+    fi
 
     echo -e "\n${GREEN}=========================================="
     echo -e "✓ Organizations successfully read - TEST PASSED"
@@ -1053,7 +1125,9 @@ test_read_projects_validation () {
     echo "Testing projects read validation..."
 
     # Test 1: Missing both page and limit parameters
-    echo "[DEBUG] Testing missing page and limit parameters..."
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Testing missing page and limit parameters..."
+    fi
     response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT' \
         --header 'Content-Type: application/json'")
 
@@ -1062,8 +1136,10 @@ test_read_projects_validation () {
         return
     fi
 
-    echo "[DEBUG] Response for missing page/limit:"
-    echo "$response" | jq '.'
+    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+        echo "[DEBUG] Response for missing page/limit:"
+        echo "$response" | jq '.'
+    fi
 
     # Check if we got the expected validation error
     if echo "$response" | jq -e '.success == false' > /dev/null && \

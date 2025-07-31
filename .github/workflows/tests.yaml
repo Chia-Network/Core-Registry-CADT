@@ -113,6 +113,7 @@ jobs:
         run: bash tests/functional-tests.sh
         env:
           TXCH_MNEMONIC: ${{ secrets.TXCH_MNEMONIC }}
+          LOG_LEVEL: DEBUG
 
       - name: Upload logs as artifacts
         uses: actions/upload-artifact@v4
