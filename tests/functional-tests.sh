@@ -196,26 +196,72 @@ check_mirrors_removed () {
     done
 }
 
-# Check if the health endpoint is responding with OK
+# Check if the required Chia services are running and core-registry-cadt is healthy
 check_health_endpoint () {
-    i=0
-    while true; do
-        response=$(curl -s http://127.0.0.1:31310/health | jq -r '.message')
+    echo "Checking health of required Chia services and core-registry-cadt..."
 
-        if [[ "$response" == "OK" ]]; then
-            echo "Health endpoint responding OK - proceeding"
-            break
+    local services=("chia_wallet" "chia_data_layer" "chia_data_layer_http")
+    local max_attempts=6
+    local attempt=0
+
+    while (( attempt < max_attempts )); do
+        local all_services_running=true
+        local cadt_healthy=false
+
+        echo "[DEBUG] Health check attempt $((attempt + 1)) of $max_attempts"
+
+        # Check Chia services
+        for service in "${services[@]}"; do
+            echo "[DEBUG] Checking if $service is running..."
+
+            # Use the Chia daemon RPC is_running endpoint
+            local response=$(chia rpc daemon is_running "{\"service\": \"$service\"}" 2>/dev/null)
+
+            if [[ $? -eq 0 ]] && echo "$response" | jq -e '.is_running == true' > /dev/null 2>&1; then
+                echo "[DEBUG] ✓ $service is running"
+            else
+                echo "[DEBUG] ✗ $service is not running"
+                all_services_running=false
+            fi
+        done
+
+        # Check core-registry-cadt health endpoint
+        if [[ "$all_services_running" == "true" ]]; then
+            echo "[DEBUG] Checking core-registry-cadt health endpoint..."
+            local health_response=$(curl -s http://127.0.0.1:31310/health 2>/dev/null)
+
+            if [[ $? -eq 0 ]] && echo "$health_response" | jq -e '.message == "OK"' > /dev/null 2>&1; then
+                echo "[DEBUG] ✓ core-registry-cadt health endpoint responding OK"
+                cadt_healthy=true
+            else
+                echo "[DEBUG] ✗ core-registry-cadt health endpoint not responding OK"
+                echo "[DEBUG] Health response: $health_response"
+            fi
         fi
 
-        echo "Health endpoint not responding OK (got: $response) - waiting 10 seconds before checking again"
+        if [[ "$all_services_running" == "true" && "$cadt_healthy" == "true" ]]; then
+            echo -e "\n${GREEN}=========================================="
+            echo -e "✓ All required Chia services are running"
+            echo -e "✓ core-registry-cadt health endpoint is responding"
+            echo -e "===========================================${NC}\n"
+            return 0
+        fi
+
+        echo -e "\n${RED}Health check incomplete - waiting 10 seconds before checking again${NC}"
+        if [[ "$all_services_running" != "true" ]]; then
+            echo "Chia services not all running"
+        fi
+        if [[ "$cadt_healthy" != "true" ]]; then
+            echo "core-registry-cadt health endpoint not responding"
+        fi
         sleep 10
-
-        if (( $i > 5 )); then
-            echo "Health check timeout of 60 seconds exceeded. Exiting with error."
-            exit 1
-        fi
-        ((i++))
+        ((attempt++))
     done
+
+    echo -e "\n${RED}Health check timeout of 60 seconds exceeded.${NC}"
+    echo "Required Chia services: ${services[*]}"
+    echo "Required core-registry-cadt health endpoint: http://127.0.0.1:31310/health"
+    exit 1
 }
 
 # Check if we are unsubscribed from all stores
@@ -994,7 +1040,233 @@ test_read_orgs () {
     track_test_result "Organizations Read" "PASS"
 }
 
-# Test 7: Delete home organization
+# Test 7: Read Projects - Validation Tests
+test_read_projects_validation () {
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
+    local PROJECTS_ENDPOINT="http://localhost:31310/v1/projects"
+    local response
+
+    echo "Testing projects read validation..."
+
+    # Test 1: Missing both page and limit parameters
+    echo "[DEBUG] Testing missing page and limit parameters..."
+    response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to make API call for missing page/limit test"
+        return
+    fi
+
+    echo "[DEBUG] Response for missing page/limit:"
+    echo "$response" | jq '.'
+
+    # Check if we got the expected validation error
+    if echo "$response" | jq -e '.success == false' > /dev/null && \
+       echo "$response" | jq -e '.message == "Data Validation error"' > /dev/null && \
+       echo "$response" | jq -e '.errors | contains(["\"page\" is required", "\"limit\" is required"])' > /dev/null; then
+        echo -e "\n${GREEN}✓ Missing page/limit validation test PASSED${NC}"
+    else
+        echo -e "\n${RED}✗ Missing page/limit validation test FAILED${NC}"
+        track_test_result "Projects Read Validation - Missing Page/Limit" "FAIL"
+        return
+    fi
+
+    # Test 2: Missing only page parameter
+    echo "[DEBUG] Testing missing page parameter..."
+    response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT?limit=10' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to make API call for missing page test"
+        return
+    fi
+
+    echo "[DEBUG] Response for missing page:"
+    echo "$response" | jq '.'
+
+    # Check if we got the expected validation error
+    if echo "$response" | jq -e '.success == false' > /dev/null && \
+       echo "$response" | jq -e '.message == "Data Validation error"' > /dev/null && \
+       echo "$response" | jq -e '.errors | contains(["\"page\" is required"])' > /dev/null; then
+        echo -e "\n${GREEN}✓ Missing page validation test PASSED${NC}"
+    else
+        echo -e "\n${RED}✗ Missing page validation test FAILED${NC}"
+        track_test_result "Projects Read Validation - Missing Page" "FAIL"
+        return
+    fi
+
+    # Test 3: Missing only limit parameter
+    echo "[DEBUG] Testing missing limit parameter..."
+    response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT?page=1' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to make API call for missing limit test"
+        return
+    fi
+
+    echo "[DEBUG] Response for missing limit:"
+    echo "$response" | jq '.'
+
+    # Check if we got the expected validation error
+    if echo "$response" | jq -e '.success == false' > /dev/null && \
+       echo "$response" | jq -e '.message == "Data Validation error"' > /dev/null && \
+       echo "$response" | jq -e '.errors | contains(["\"limit\" is required"])' > /dev/null; then
+        echo -e "\n${GREEN}✓ Missing limit validation test PASSED${NC}"
+    else
+        echo -e "\n${RED}✗ Missing limit validation test FAILED${NC}"
+        track_test_result "Projects Read Validation - Missing Limit" "FAIL"
+        return
+    fi
+
+    # Test 4: Invalid page value (less than 1)
+    echo "[DEBUG] Testing invalid page value (0)..."
+    response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT?page=0&limit=10' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to make API call for invalid page test"
+        return
+    fi
+
+    echo "[DEBUG] Response for invalid page:"
+    echo "$response" | jq '.'
+
+    # Check if we got the expected validation error
+    if echo "$response" | jq -e '.success == false' > /dev/null && \
+       echo "$response" | jq -e '.message == "Data Validation error"' > /dev/null; then
+        echo -e "\n${GREEN}✓ Invalid page validation test PASSED${NC}"
+    else
+        echo -e "\n${RED}✗ Invalid page validation test FAILED${NC}"
+        track_test_result "Projects Read Validation - Invalid Page" "FAIL"
+        return
+    fi
+
+    # Test 5: Invalid limit value (greater than 1000)
+    echo "[DEBUG] Testing invalid limit value (1001)..."
+    response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT?page=1&limit=1001' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to make API call for invalid limit test"
+        return
+    fi
+
+    echo "[DEBUG] Response for invalid limit:"
+    echo "$response" | jq '.'
+
+    # Check if we got the expected validation error
+    if echo "$response" | jq -e '.success == false' > /dev/null && \
+       echo "$response" | jq -e '.message == "Data Validation error"' > /dev/null; then
+        echo -e "\n${GREEN}✓ Invalid limit validation test PASSED${NC}"
+    else
+        echo -e "\n${RED}✗ Invalid limit validation test FAILED${NC}"
+        track_test_result "Projects Read Validation - Invalid Limit" "FAIL"
+        return
+    fi
+
+    echo -e "\n${GREEN}=========================================="
+    echo -e "✓ All projects read validation tests PASSED"
+    echo -e "===========================================${NC}\n"
+    track_test_result "Projects Read Validation" "PASS"
+}
+
+# Test 8: Read Projects - Success Tests
+test_read_projects_success () {
+    # First verify wallet is synced
+    if ! is_wallet_synced; then
+        return
+    fi
+
+    local PROJECTS_ENDPOINT="http://localhost:31310/v1/projects"
+    local response
+
+    echo "Testing projects read success scenarios..."
+
+    # Test 1: Basic projects read with page and limit
+    echo "[DEBUG] Testing basic projects read with page=1&limit=10..."
+    response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT?page=1&limit=10' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to make API call for basic projects read"
+        return
+    fi
+
+    echo "[DEBUG] Basic projects read response:"
+    echo "$response" | jq '.'
+
+    # Check if we got a successful response
+    if echo "$response" | jq -e 'has("page")' > /dev/null && \
+       echo "$response" | jq -e 'has("pageCount")' > /dev/null && \
+       echo "$response" | jq -e 'has("data")' > /dev/null; then
+        echo -e "\n${GREEN}✓ Basic projects read test PASSED${NC}"
+    else
+        echo -e "\n${RED}✗ Basic projects read test FAILED${NC}"
+        track_test_result "Projects Read Success - Basic" "FAIL"
+        return
+    fi
+
+    # Test 2: Search for projects containing "Temporary"
+    echo "[DEBUG] Testing search for projects containing 'Temporary'..."
+    response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT?search=Temporary&page=1&limit=10' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to make API call for projects search"
+        return
+    fi
+
+    echo "[DEBUG] Projects search response:"
+    echo "$response" | jq '.'
+
+    # Check if we got a successful response
+    if echo "$response" | jq -e 'has("page")' > /dev/null && \
+       echo "$response" | jq -e 'has("pageCount")' > /dev/null && \
+       echo "$response" | jq -e 'has("data")' > /dev/null; then
+        echo -e "\n${GREEN}✓ Projects search test PASSED${NC}"
+    else
+        echo -e "\n${RED}✗ Projects search test FAILED${NC}"
+        track_test_result "Projects Read Success - Search" "FAIL"
+        return
+    fi
+
+    # Test 3: Get projects with specific columns
+    echo "[DEBUG] Testing projects read with specific columns..."
+    response=$(make_api_call "curl -s --location --request GET '$PROJECTS_ENDPOINT?page=1&limit=5&columns=projectName&columns=projectDeveloper&columns=sector' \
+        --header 'Content-Type: application/json'")
+
+    if [[ $? -ne 0 ]]; then
+        fail_test "Failed to make API call for projects with columns"
+        return
+    fi
+
+    echo "[DEBUG] Projects with columns response:"
+    echo "$response" | jq '.'
+
+    # Check if we got a successful response
+    if echo "$response" | jq -e 'has("page")' > /dev/null && \
+       echo "$response" | jq -e 'has("pageCount")' > /dev/null && \
+       echo "$response" | jq -e 'has("data")' > /dev/null; then
+        echo -e "\n${GREEN}✓ Projects with columns test PASSED${NC}"
+    else
+        echo -e "\n${RED}✗ Projects with columns test FAILED${NC}"
+        track_test_result "Projects Read Success - Columns" "FAIL"
+        return
+    fi
+
+    echo -e "\n${GREEN}=========================================="
+    echo -e "✓ All projects read success tests PASSED"
+    echo -e "===========================================${NC}\n"
+    track_test_result "Projects Read Success" "PASS"
+}
+
+# Test 9: Delete home organization
 test_delete_home_org () {
     # First verify wallet is synced
     if ! is_wallet_synced; then
@@ -1353,7 +1625,13 @@ test_add_unit
 # Test 6: Read Organizations
 test_read_orgs
 
-# Test 7: Delete home organization (do this last)
+# Test 7: Read Projects - Validation Tests
+test_read_projects_validation
+
+# Test 8: Read Projects - Success Tests
+test_read_projects_success
+
+# Test 9: Delete home organization (do this last)
 test_delete_home_org
 
 # If we got here with no failures, run cleanup and exit successfully
