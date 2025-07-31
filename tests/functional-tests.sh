@@ -19,6 +19,10 @@ ERROR_MESSAGE=""
 HOME_ORG_UID=""
 HOME_REGISTRY_ID=""
 
+# Test tracking arrays
+PASSED_TESTS=()
+FAILED_TESTS=()
+
 expected_subscription_ids=(
     "29fe490bde0186cb7a592450d12e78162a353b866beec3e51bd67394257e4f4f"
     "68ac700af4c9a8c937029114a0fbbdbd3be282ad2aaec4ebe8485efa1426d38f"
@@ -318,6 +322,59 @@ fail_test () {
     cleanup
 }
 
+# Function to track test results
+track_test_result() {
+    local test_name="$1"
+    local test_result="$2"  # "PASS" or "FAIL"
+
+    if [[ "$test_result" == "PASS" ]]; then
+        PASSED_TESTS+=("$test_name")
+    else
+        FAILED_TESTS+=("$test_name")
+    fi
+}
+
+# Function to display test summary
+display_test_summary() {
+    echo -e "\n${BLUE}=========================================="
+    echo -e "TEST SUMMARY"
+    echo -e "===========================================${NC}\n"
+
+    local total_tests=$((${#PASSED_TESTS[@]} + ${#FAILED_TESTS[@]}))
+    local passed_count=${#PASSED_TESTS[@]}
+    local failed_count=${#FAILED_TESTS[@]}
+
+    echo -e "${BLUE}Total Tests: $total_tests${NC}"
+    echo -e "${GREEN}Passed: $passed_count${NC}"
+    echo -e "${RED}Failed: $failed_count${NC}\n"
+
+    if [[ ${#PASSED_TESTS[@]} -gt 0 ]]; then
+        echo -e "${GREEN}✓ PASSED TESTS:${NC}"
+        for test in "${PASSED_TESTS[@]}"; do
+            echo -e "${GREEN}  • $test${NC}"
+        done
+        echo ""
+    fi
+
+    if [[ ${#FAILED_TESTS[@]} -gt 0 ]]; then
+        echo -e "${RED}✗ FAILED TESTS:${NC}"
+        for test in "${FAILED_TESTS[@]}"; do
+            echo -e "${RED}  • $test${NC}"
+        done
+        echo ""
+    fi
+
+    if [[ $failed_count -eq 0 ]]; then
+        echo -e "${GREEN}=========================================="
+        echo -e "🎉 ALL TESTS PASSED! 🎉"
+        echo -e "===========================================${NC}\n"
+    else
+        echo -e "${RED}=========================================="
+        echo -e "❌ SOME TESTS FAILED ❌"
+        echo -e "===========================================${NC}\n"
+    fi
+}
+
 # Test if we are subscribed to all expected store IDs
 test_subscriptions () {
     local TIMEOUT_SECONDS=600
@@ -368,6 +425,7 @@ test_subscriptions () {
             echo -e "\n${GREEN}=========================================="
             echo -e "✓ All expected subscriptions found - TEST PASSED"
             echo -e "===========================================${NC}\n"
+            track_test_result "DataLayer Subscriptions" "PASS"
             break
         fi
 
@@ -381,6 +439,7 @@ test_subscriptions () {
             for id in "${missing_ids[@]}"; do
                 echo -e "${RED}✗${NC} $id"
             done
+            track_test_result "DataLayer Subscriptions" "FAIL"
             fail_test "Subscription test timeout of $TIMEOUT_SECONDS seconds exceeded."
             return
         fi
@@ -567,6 +626,7 @@ test_create_home_org () {
             HOME_ORG_UID="$org_uid"
             HOME_REGISTRY_ID="$registry_id"
 
+            track_test_result "Home Organization Creation" "PASS"
             break
         else
             echo -e "${RED}●${NC} Home organization exists but not ready (subscribed: $is_subscribed, synced: $is_synced) - checking again in $CHECK_INTERVAL seconds"
@@ -578,6 +638,7 @@ test_create_home_org () {
                 echo -e "\n${RED}Organization creation results after $TIMEOUT_SECONDS seconds:${NC}"
                 echo "Current organizations state:"
                 echo "$response" | jq '.'
+                track_test_result "Home Organization Creation" "FAIL"
                 fail_test "Organization creation verification timeout of $TIMEOUT_SECONDS seconds exceeded."
                 return
             fi
@@ -678,6 +739,7 @@ test_create_project () {
             echo -e "\n${GREEN}=========================================="
             echo -e "✓ Project successfully created and found in staging - TEST PASSED"
             echo -e "===========================================${NC}\n"
+            track_test_result "Project Creation" "PASS"
             break
         fi
 
@@ -686,6 +748,7 @@ test_create_project () {
             echo "Expected project UUID: $project_uuid"
             echo "Current staging state:"
             echo "$response" | jq '.'
+            track_test_result "Project Creation" "FAIL"
             fail_test "Project staging verification timeout of $TIMEOUT_SECONDS seconds exceeded."
             return
         fi
@@ -811,6 +874,7 @@ test_delete_home_org () {
             echo -e "\n${GREEN}=========================================="
             echo -e "✓ Home organization successfully deleted and verified - TEST PASSED"
             echo -e "===========================================${NC}\n"
+            track_test_result "Home Organization Deletion" "PASS"
             break
         fi
 
@@ -819,6 +883,7 @@ test_delete_home_org () {
             echo "Attempted to delete orgUid: $org_uid"
             echo "Current organizations state:"
             echo "$response" | jq '.'
+            track_test_result "Home Organization Deletion" "FAIL"
             fail_test "Organization deletion verification timeout of $TIMEOUT_SECONDS seconds exceeded."
             return
         fi
@@ -878,6 +943,7 @@ split_coins() {
     local split_result
     split_result=$(chia-tools coins split-largest -m 0 -n 30 -a 0.0003)
     if [[ $? -ne 0 ]]; then
+        track_test_result "Coin Split" "FAIL"
         fail_test "Failed to split coins: $split_result"
         return
     fi
@@ -890,11 +956,13 @@ split_coins() {
     local transaction_id
     transaction_id=$(echo "$split_result" | grep -o 'TRANSACTION_ID=[a-f0-9]*' | cut -d'=' -f2)
     if [[ $? -ne 0 ]]; then
+        track_test_result "Coin Split" "FAIL"
         fail_test "Failed to parse transaction ID from split response"
         return
     fi
 
     if [[ -z "$transaction_id" ]]; then
+        track_test_result "Coin Split" "FAIL"
         fail_test "No transaction ID found in split response"
         return
     fi
@@ -914,6 +982,7 @@ split_coins() {
     chia wallet show
 
     echo "=== Coin split completed successfully ==="
+    track_test_result "Coin Split" "PASS"
 }
 
 # Function to transfer funds to test wallet
@@ -923,6 +992,7 @@ transfer_funds_to_test_wallet() {
     # Get wallet address and store it in test_wallet_address variable
     test_wallet_address=$(chia wallet get_address)
     if [[ $? -ne 0 ]]; then
+        track_test_result "Funds Transfer" "FAIL"
         fail_test "Failed to get wallet address"
         return
     fi
@@ -1001,6 +1071,7 @@ transfer_funds_to_test_wallet() {
     echo "Sending transaction to transfer 0.001 TXCH to test wallet ${test_wallet_address}"
     transaction_id=$(chia rpc wallet send_transaction "{\"wallet_id\": 1, \"amount\": 9000000000, \"fee\": 0, \"memos\":[\"transfer to test wallet\"], \"address\": \"$test_wallet_address\"}" | jq -r '.transaction_id')
     if [[ $? -ne 0 ]]; then
+        track_test_result "Funds Transfer" "FAIL"
         fail_test "Failed to send transaction"
         return
     fi
@@ -1036,6 +1107,7 @@ transfer_funds_to_test_wallet() {
     fi
 
     echo "=== Funds transfer completed successfully ==="
+    track_test_result "Funds Transfer" "PASS"
 }
 
 #~~~ Start Chia ~~~ #
@@ -1084,6 +1156,9 @@ test_delete_home_org
 
 # If we got here with no failures, run cleanup and exit successfully
 cleanup
+
+# Display test summary
+display_test_summary
 
 #~~~~ upload logs to artifacts here ~~~~#
 #cat ~/.chia/mainnet/log/debug.log
