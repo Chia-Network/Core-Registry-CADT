@@ -915,7 +915,9 @@ split_coins() {
 
     echo "=== Coin split completed successfully ==="
 }
-0003
+
+# Function to transfer funds to test wallet
+transfer_funds_to_test_wallet() {
     echo "=== Transferring funds to test wallet ==="
 
     # Get wallet address and store it in test_wallet_address variable
