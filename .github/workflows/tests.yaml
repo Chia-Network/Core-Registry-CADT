@@ -94,16 +94,20 @@ jobs:
           pm2 stop core-registry-cadt
 
           # Remove cadt database to reset system
+          echo "Removing cadt database to reset system..."
           rm -f ~/.chia/mainnet/core-registry/cadt/v1/data.sqlite3*
 
           # Configure CADT to most verbose logs
-          yq -yi '.GENERAL.LOG_LEVEL = "trace"' ~/.chia/mainnet/core-registry/config.yaml
+          echo "Configuring CADT config.yaml..."
+          yq -yi '.GENERAL.LOG_LEVEL = "debug"' ~/.chia/mainnet/core-registry/config.yaml
           yq -yi '.CADT.GOVERNANCE.GOVERNANCE_BODY_ID = "29fe490bde0186cb7a592450d12e78162a353b866beec3e51bd67394257e4f4f"' ~/.chia/mainnet/core-registry/config.yaml
           yq -yi '.CHIA.DATALAYER_HOST = "https://127.0.0.1:8562"' ~/.chia/mainnet/core-registry/config.yaml
           yq -yi '.CHIA.WALLET_HOST = "https://127.0.0.1:9256"' ~/.chia/mainnet/core-registry/config.yaml
-          yq -yi '.DATALAYER_FILE_SERVER_URL = "https://127.0.0.1:8575"' ~/.chia/mainnet/core-registry/config.yaml
-          yq -yi '.AUTO_MIRROR_EXTERNAL_STORES = "true"' ~/.chia/mainnet/core-registry/config.yaml
+          yq -yi '.CHIA.DATALAYER_FILE_SERVER_URL = "https://127.0.0.1:8575"' ~/.chia/mainnet/core-registry/config.yaml
+          yq -yi '.CADT.AUTO_MIRROR_EXTERNAL_STORES = "true"' ~/.chia/mainnet/core-registry/config.yaml
 
+          # Show the config file
+          echo "Showing the config file after configuration ... (this is the final config file)"
           cat ~/.chia/mainnet/core-registry/config.yaml
 
           # Clean up any existing PM2 processes with the same name

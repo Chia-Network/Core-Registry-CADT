@@ -41,12 +41,12 @@ is_wallet_synced () {
     i=0
     while true; do
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Running wallet sync status check..."
+        echo "[DEBUG] Running wallet sync status check..."
         fi
         local response=$(chia rpc wallet get_sync_status)
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Raw wallet sync response:"
-            echo "$response"
+        echo "[DEBUG] Raw wallet sync response:"
+        echo "$response"
         fi
 
         # Check if wallet is synced by comparing the synced field to true
@@ -75,7 +75,7 @@ wait_for_transaction() {
     i=0
     while true; do
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
         fi
 
         # Get transaction status
@@ -84,16 +84,16 @@ wait_for_transaction() {
 
         if [[ $? -ne 0 ]]; then
             if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-                echo "[DEBUG] Failed to get transaction status"
-                echo "[DEBUG] Response: $response"
+            echo "[DEBUG] Failed to get transaction status"
+            echo "[DEBUG] Response: $response"
             fi
             fail_test "Failed to get transaction status. This usually means the transaction ID is invalid or empty."
             return 1
         fi
 
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Transaction response:"
-            echo "$response"
+        echo "[DEBUG] Transaction response:"
+        echo "$response"
         fi
 
         # Check if transaction is confirmed
@@ -126,14 +126,14 @@ check_wallet_balance() {
     i=0
     while true; do
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Balance check attempt $((i+1)) of $MAX_ATTEMPTS"
+        echo "[DEBUG] Balance check attempt $((i+1)) of $MAX_ATTEMPTS"
         fi
 
         local balance_response
         balance_response=$(chia rpc wallet get_wallet_balances "{\"wallet_ids\": [$wallet_id]}")
         if [[ $? -ne 0 ]]; then
             if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-                echo "[DEBUG] Failed to get wallet balance, will retry..."
+            echo "[DEBUG] Failed to get wallet balance, will retry..."
             fi
             sleep "$CHECK_INTERVAL"
             if (( i >= MAX_ATTEMPTS )); then
@@ -145,8 +145,8 @@ check_wallet_balance() {
         fi
 
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Balance response:"
-            echo "$balance_response"
+        echo "[DEBUG] Balance response:"
+        echo "$balance_response"
         fi
 
         # Extract the confirmed wallet balance
@@ -154,7 +154,7 @@ check_wallet_balance() {
         confirmed_balance=$(echo "$balance_response" | jq -r ".wallet_balances[\"$wallet_id\"].confirmed_wallet_balance")
         if [[ $? -ne 0 ]]; then
             if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-                echo "[DEBUG] Failed to parse wallet balance, will retry..."
+            echo "[DEBUG] Failed to parse wallet balance, will retry..."
             fi
             sleep "$CHECK_INTERVAL"
             if (( i >= MAX_ATTEMPTS )); then
@@ -461,7 +461,7 @@ test_subscriptions () {
 
     echo "Testing DataLayer subscriptions... (this can take up to $TIMEOUT_SECONDS seconds)"
     if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-        echo "[DEBUG] Will check every $CHECK_INTERVAL seconds, up to $MAX_ATTEMPTS times"
+    echo "[DEBUG] Will check every $CHECK_INTERVAL seconds, up to $MAX_ATTEMPTS times"
     fi
 
     # Print out the expected subscription IDs we're looking for
@@ -478,15 +478,15 @@ test_subscriptions () {
     i=0
     while true; do
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
         fi
 
 
         # Get current subscriptions
         current_subscriptions=$(chia rpc data_layer subscriptions | jq -r '.store_ids[]')
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Current subscriptions response:"
-            echo "$current_subscriptions"
+        echo "[DEBUG] Current subscriptions response:"
+        echo "$current_subscriptions"
         fi
 
         missing_subs=0
@@ -504,7 +504,7 @@ test_subscriptions () {
         done
 
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Found ${#found_ids[@]} subscriptions, missing ${#missing_ids[@]} subscriptions"
+        echo "[DEBUG] Found ${#found_ids[@]} subscriptions, missing ${#missing_ids[@]} subscriptions"
         fi
 
         if (( missing_subs == 0 )); then
@@ -542,22 +542,22 @@ check_home_org () {
     local home_orgs
 
     if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-        echo "[DEBUG] Checking for home organizations..."
+    echo "[DEBUG] Checking for home organizations..."
     fi
 
     # Get organizations and store response
     response=$(make_api_call "curl -s --location --request GET '$ENDPOINT' --header 'Content-Type: application/json'")
     if [[ $? -ne 0 ]]; then
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] curl request failed"
+        echo "[DEBUG] curl request failed"
         fi
         fail_test "Failed to fetch organizations from $ENDPOINT"
         return 1
     fi
 
     if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-        echo "[DEBUG] Organizations response:"
-        echo "$response"
+    echo "[DEBUG] Organizations response:"
+    echo "$response"
     fi
 
     # If response is empty or just {}, no organizations exist
@@ -570,7 +570,7 @@ check_home_org () {
     home_orgs=$(echo "$response" | jq '[.[] | select(.isHome == true)] | length')
     if [[ $? -ne 0 ]]; then
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Failed to parse organizations response with jq"
+        echo "[DEBUG] Failed to parse organizations response with jq"
         fi
         fail_test "Failed to parse organizations response"
         return 1
@@ -583,8 +583,8 @@ check_home_org () {
         echo -e "${RED}●${NC} Found $home_orgs home organization(s)"
         # Get the orgUids of home orgs for debugging
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Home organization UIDs:"
-            echo "$response" | jq -r '.[] | select(.isHome == true) | .orgUid'
+        echo "[DEBUG] Home organization UIDs:"
+        echo "$response" | jq -r '.[] | select(.isHome == true) | .orgUid'
         fi
         return 1
     fi
@@ -612,7 +612,7 @@ test_create_home_org () {
 
     # Create home organization
     if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-        echo "[DEBUG] Creating home organization..."
+    echo "[DEBUG] Creating home organization..."
     fi
     local response
     response=$(make_api_call "curl -s --location -g --request POST '$CREATE_ENDPOINT' \
@@ -623,8 +623,8 @@ test_create_home_org () {
         }'")
 
     if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-        echo "[DEBUG] Create organization response:"
-        echo "$response"
+    echo "[DEBUG] Create organization response:"
+    echo "$response"
     fi
 
     # Check if creation was successful
@@ -638,13 +638,13 @@ test_create_home_org () {
     i=0
     while true; do
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
+        echo "[DEBUG] Check attempt $((i+1)) of $MAX_ATTEMPTS"
         fi
 
         # Show owned stores status
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Current owned stores:"
-            chia data get_owned_stores
+        echo "[DEBUG] Current owned stores:"
+        chia data get_owned_stores
         fi
 
         # Get current organizations
@@ -656,15 +656,15 @@ test_create_home_org () {
         fi
 
         if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-            echo "[DEBUG] Organizations check response:"
-            echo "$response" | jq '.'
+        echo "[DEBUG] Organizations check response:"
+        echo "$response" | jq '.'
         fi
 
         # Check if response is valid JSON
         if ! echo "$response" | jq empty > /dev/null 2>&1; then
             if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-                echo "[DEBUG] Invalid JSON response received"
-                echo "[DEBUG] Response content: $response"
+            echo "[DEBUG] Invalid JSON response received"
+            echo "[DEBUG] Response content: $response"
             fi
             sleep "$CHECK_INTERVAL"
             ((i++))
@@ -774,7 +774,7 @@ test_create_project () {
 
     # Create project
     if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-        echo "[DEBUG] Creating new project..."
+    echo "[DEBUG] Creating new project..."
     fi
     response=$(make_api_call "curl -s --location -g --request POST '$PROJECTS_ENDPOINT' \
         --header 'Content-Type: application/json' \
@@ -1054,9 +1054,9 @@ test_add_unit () {
 
         # Check if our unit UUID exists in staging
         if echo "$response" | jq -e --arg uuid "$unit_uuid" '.[] | select(.uuid == $uuid)' > /dev/null; then
-            echo -e "\n${GREEN}=========================================="
+    echo -e "\n${GREEN}=========================================="
             echo -e "✓ Unit successfully created and found in staging - TEST PASSED"
-            echo -e "===========================================${NC}\n"
+    echo -e "===========================================${NC}\n"
             track_test_result "Unit Addition" "PASS"
             break
         fi
@@ -1077,7 +1077,7 @@ test_add_unit () {
     done
 }
 
-# Test 6: Read Organizations
+# Test 2: Read Organizations and Validate Specific Org
 test_read_orgs () {
     # First verify wallet is synced
     if ! is_wallet_synced; then
@@ -1086,30 +1086,165 @@ test_read_orgs () {
 
     local ORGANIZATIONS_ENDPOINT="http://localhost:31310/v1/organizations"
     local response
+    local expected_org_uid="11f7e8eb5a2a32dd373c14a172d55f62608a3e240cdf01362ce9fa398d2ca378"
+    local TIMEOUT_SECONDS=300  # 5 minutes
+    local CHECK_INTERVAL=10    # 10 seconds
+    local MAX_ATTEMPTS=$((TIMEOUT_SECONDS / CHECK_INTERVAL))
 
-    echo "Testing organizations read..."
+    echo "Testing organizations read and validation... (this can take up to $TIMEOUT_SECONDS seconds)"
 
-    # Get organizations
-    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-        echo "[DEBUG] Reading organizations from CADT..."
+    # Wait for organization to be synced
+    local i=0
+    while true; do
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Organization sync check attempt $((i+1)) of $MAX_ATTEMPTS"
+        fi
+
+        # Get organizations
+        response=$(make_api_call "curl -s --location --request GET '$ORGANIZATIONS_ENDPOINT' \
+            --header 'Content-Type: application/json'")
+
+        if [[ $? -ne 0 ]]; then
+            fail_test "Failed to get organizations"
+            return
+        fi
+
+        if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
+            echo "[DEBUG] Organizations response:"
+            echo "$response" | jq '.'
+        fi
+
+        # Check if the expected organization exists
+        if ! echo "$response" | jq -e ".$expected_org_uid" > /dev/null; then
+            fail_test "Expected organization $expected_org_uid not found in response"
+            return
+        fi
+
+        # Get the organization data
+        local org_data
+        org_data=$(echo "$response" | jq ".$expected_org_uid")
+
+        # Check if organization is synced
+        local is_synced
+        local sync_remaining
+        is_synced=$(echo "$org_data" | jq -r '.synced')
+        sync_remaining=$(echo "$org_data" | jq -r '.sync_remaining')
+
+        echo "Organization sync status: synced=$is_synced, sync_remaining=$sync_remaining"
+
+        if [[ "$is_synced" == "true" ]]; then
+            echo -e "${GREEN}●${NC} Organization is synced - proceeding with validation"
+            break
+        fi
+
+        if (( i >= MAX_ATTEMPTS )); then
+            echo -e "\n${RED}Organization sync timeout of $TIMEOUT_SECONDS seconds exceeded.${NC}"
+            echo "Final organization state:"
+            echo "$org_data" | jq '.'
+            track_test_result "Organizations Read and Validation" "FAIL"
+            fail_test "Organization sync timeout exceeded"
+            return
+        fi
+
+        echo -e "${RED}●${NC} Organization not yet synced - checking again in $CHECK_INTERVAL seconds"
+        sleep "$CHECK_INTERVAL"
+        ((i++))
+    done
+
+    # Now validate the specific organization has the expected values
+    local org_data
+    org_data=$(echo "$response" | jq ".$expected_org_uid")
+
+    # Validate each field
+    local validation_errors=()
+
+    # Check orgUid
+    if [[ $(echo "$org_data" | jq -r '.orgUid') != "$expected_org_uid" ]]; then
+        validation_errors+=("orgUid mismatch")
     fi
-    response=$(make_api_call "curl -s --location --request GET '$ORGANIZATIONS_ENDPOINT' \
-        --header 'Content-Type: application/json'")
 
-    if [[ $? -ne 0 ]]; then
-        fail_test "Failed to get organizations"
+    # Check orgHash
+    if [[ $(echo "$org_data" | jq -r '.orgHash') != "0x022f1fe0b02fc9e0929a012d09439e63289828b8964c488d9e16864031d35b0e" ]]; then
+        validation_errors+=("orgHash mismatch")
+    fi
+
+    # Check name
+    if [[ $(echo "$org_data" | jq -r '.name') != "Automated Testing Participant Data" ]]; then
+        validation_errors+=("name mismatch")
+    fi
+
+    # Check icon
+    if [[ $(echo "$org_data" | jq -r '.icon') != "https://www.chia.net/wp-content/uploads/2023/01/chia-logo-dark.svg" ]]; then
+        validation_errors+=("icon mismatch")
+    fi
+
+    # Check prefix
+    if [[ $(echo "$org_data" | jq -r '.prefix') != "0" ]]; then
+        validation_errors+=("prefix mismatch")
+    fi
+
+    # Check isHome
+    if [[ $(echo "$org_data" | jq -r '.isHome') != "false" ]]; then
+        validation_errors+=("isHome mismatch")
+    fi
+
+    # Check subscribed
+    if [[ $(echo "$org_data" | jq -r '.subscribed') != "true" ]]; then
+        validation_errors+=("subscribed mismatch")
+    fi
+
+    # Check synced
+    if [[ $(echo "$org_data" | jq -r '.synced') != "true" ]]; then
+        validation_errors+=("synced mismatch")
+    fi
+
+    # Check fileStoreSubscribed
+    if [[ $(echo "$org_data" | jq -r '.fileStoreSubscribed') != "0" ]]; then
+        validation_errors+=("fileStoreSubscribed mismatch")
+    fi
+
+    # Check registryId
+    if [[ $(echo "$org_data" | jq -r '.registryId') != "cdcd3e377fbf9c75b4bbd4f1e65ab366be8f886e4fbdf20ff9926503cb30038c" ]]; then
+        validation_errors+=("registryId mismatch")
+    fi
+
+    # Check registryHash
+    if [[ $(echo "$org_data" | jq -r '.registryHash') != "0xe04062baca202d4cfdbb5ed26115c3b98fc952b293c35b167c4db2ad57905e96" ]]; then
+        validation_errors+=("registryHash mismatch")
+    fi
+
+    # Check sync_remaining
+    if [[ $(echo "$org_data" | jq -r '.sync_remaining') != "0" ]]; then
+        validation_errors+=("sync_remaining mismatch")
+    fi
+
+    # Check dataModelVersionStoreId
+    if [[ $(echo "$org_data" | jq -r '.dataModelVersionStoreId') != "a32e8ba6f67a8c95a785b01f86f4c2604cf703318e223142fac3831478c3b089" ]]; then
+        validation_errors+=("dataModelVersionStoreId mismatch")
+    fi
+
+    # Check dataModelVersionStoreHash
+    if [[ $(echo "$org_data" | jq -r '.dataModelVersionStoreHash') != "null" ]]; then
+        validation_errors+=("dataModelVersionStoreHash mismatch")
+    fi
+
+    # Report validation results
+    if [[ ${#validation_errors[@]} -gt 0 ]]; then
+        echo -e "\n${RED}Organization validation failed:${NC}"
+        for error in "${validation_errors[@]}"; do
+            echo -e "${RED}  • $error${NC}"
+        done
+        echo -e "\n${RED}Expected organization data:${NC}"
+        echo "$org_data" | jq '.'
+        track_test_result "Organizations Read and Validation" "FAIL"
+        fail_test "Organization validation failed"
         return
     fi
 
-    if [[ "${LOG_LEVEL:-}" == "DEBUG" ]]; then
-        echo "[DEBUG] Organizations response:"
-        echo "$response" | jq '.'
-    fi
-
     echo -e "\n${GREEN}=========================================="
-    echo -e "✓ Organizations successfully read - TEST PASSED"
+    echo -e "✓ Organizations successfully read and validated - TEST PASSED"
     echo -e "===========================================${NC}\n"
-    track_test_result "Organizations Read" "PASS"
+    track_test_result "Organizations Read and Validation" "PASS"
 }
 
 # Test 7: Read Projects - Validation Tests
@@ -1686,20 +1821,20 @@ pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
 # Test 1: Verify that we are subscribed to all required DataLayer stores
 test_subscriptions
 
-# Test 2: Create a home organization
+# Test 2: Read Organizations and Validate Specific Org
+test_read_orgs
+
+# Test 3: Create a home organization
 test_create_home_org
 
-# Test 3: Create and verify a project
+# Test 4: Create and verify a project
 test_create_project
 
-# Test 4: Add a Project
+# Test 5: Add a Project
 test_add_project
 
-# Test 5: Add a Unit
+# Test 6: Add a Unit
 test_add_unit
-
-# Test 6: Read Organizations
-test_read_orgs
 
 # Test 7: Read Projects - Validation Tests
 test_read_projects_validation
