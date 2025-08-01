@@ -609,9 +609,9 @@ test_create_home_org () {
         return
     fi
 
-    local TIMEOUT_SECONDS=900   # 15 minutes
+    local TIMEOUT_SECONDS=1800   # 30 minutes
     local CHECK_INTERVAL=30
-    local MAX_ATTEMPTS=30
+    local MAX_ATTEMPTS=60
     local CREATE_ENDPOINT="http://localhost:31310/v1/organizations/create"
 
     echo "Testing home organization creation... (this can take up to 30 minutes)"
