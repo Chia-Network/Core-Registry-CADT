@@ -729,10 +729,10 @@ test_create_home_org () {
         local org_uid
         local registry_id
 
-        is_subscribed=$(echo "$response" | jq -r ".$home_org.subscribed")
-        is_synced=$(echo "$response" | jq -r ".$home_org.synced")
-        org_uid=$(echo "$response" | jq -r ".$home_org.orgUid")
-        registry_id=$(echo "$response" | jq -r ".$home_org.registryId")
+        is_subscribed=$(echo "$response" | jq -r ".[\"$home_org\"].subscribed")
+        is_synced=$(echo "$response" | jq -r ".[\"$home_org\"].synced")
+        org_uid=$(echo "$response" | jq -r ".[\"$home_org\"].orgUid")
+        registry_id=$(echo "$response" | jq -r ".[\"$home_org\"].registryId")
 
         if [[ "$is_subscribed" == "true" && "$is_synced" == "true" ]]; then
             echo -e "\n${GREEN}=========================================="
