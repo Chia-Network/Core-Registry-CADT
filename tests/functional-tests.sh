@@ -1883,20 +1883,20 @@ pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
 # Test 1: Verify that we are subscribed to all required DataLayer stores
 test_subscriptions
 
-# Test 2: Read Organizations and Validate Specific Org
-test_read_orgs
-
-# Test 3: Create a home organization
+# Test 2: Create a home organization
 test_create_home_org
 
-# Test 4: Create and verify a project
+# Test 3: Create and verify a project
 test_create_project
 
-# Test 5: Add a Project
+# Test 4: Add a Project
 test_add_project
 
-# Test 6: Add a Unit
+# Test 5: Add a Unit
 test_add_unit
+
+# Test 6: Read Organizations and Validate Specific Org
+test_read_orgs
 
 # Test 7: Read Projects - Validation Tests
 test_read_projects_validation
