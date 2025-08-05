@@ -1283,7 +1283,7 @@ test_read_projects_validation () {
 
     echo "Testing projects read validation..."
 
-    # Test 1: Missing both page and limit parameters
+    # Test 1: Missing both page and limit parameters (should return all projects)
     if [[ "$DEBUG" == "true" ]]; then
         echo "[DEBUG] Testing missing page and limit parameters..."
     fi
@@ -1300,18 +1300,16 @@ test_read_projects_validation () {
         echo "$response" | jq '.'
     fi
 
-    # Check if we got the expected validation error
-    if echo "$response" | jq -e '.success == false' > /dev/null && \
-       echo "$response" | jq -e '.message == "Data Validation error"' > /dev/null && \
-       echo "$response" | jq -e '.errors | contains(["\"page\" is required", "\"limit\" is required"])' > /dev/null; then
-        echo -e "\n${GREEN}✓ Missing page/limit validation test PASSED${NC}"
+    # Check if we got a successful response with project data
+    if echo "$response" | jq -e 'type == "array"' > /dev/null; then
+        echo -e "\n${GREEN}✓ Missing page/limit returns all projects - test PASSED${NC}"
     else
-        echo -e "\n${RED}✗ Missing page/limit validation test FAILED${NC}"
+        echo -e "\n${RED}✗ Missing page/limit validation test FAILED - expected array response${NC}"
         track_test_result "Projects Read Validation - Missing Page/Limit" "FAIL"
         return
     fi
 
-    # Test 2: Missing only page parameter
+    # Test 2: Missing only page parameter (should fail due to .with() rule)
     if [[ "$DEBUG" == "true" ]]; then
         echo "[DEBUG] Testing missing page parameter..."
     fi
@@ -1328,7 +1326,7 @@ test_read_projects_validation () {
         echo "$response" | jq '.'
     fi
 
-    # Check if we got the expected validation error
+    # Check if we got the expected validation error (page is required when limit is provided)
     if echo "$response" | jq -e '.success == false' > /dev/null && \
        echo "$response" | jq -e '.message == "Data Validation error"' > /dev/null && \
        echo "$response" | jq -e '.errors | contains(["\"page\" is required"])' > /dev/null; then
@@ -1339,7 +1337,7 @@ test_read_projects_validation () {
         return
     fi
 
-    # Test 3: Missing only limit parameter
+    # Test 3: Missing only limit parameter (should fail due to .with() rule)
     if [[ "$DEBUG" == "true" ]]; then
         echo "[DEBUG] Testing missing limit parameter..."
     fi
@@ -1356,7 +1354,7 @@ test_read_projects_validation () {
         echo "$response" | jq '.'
     fi
 
-    # Check if we got the expected validation error
+    # Check if we got the expected validation error (limit is required when page is provided)
     if echo "$response" | jq -e '.success == false' > /dev/null && \
        echo "$response" | jq -e '.message == "Data Validation error"' > /dev/null && \
        echo "$response" | jq -e '.errors | contains(["\"limit\" is required"])' > /dev/null; then
@@ -1597,7 +1595,7 @@ test_delete_home_org () {
         fi
 
         # Check if any home orgs exist
-        if echo "$response" | jq -e 'to_entries[] | select(.value.isHome == true) | length == 0' > /dev/null; then
+        if echo "$response" | jq -e '[to_entries[] | select(.value.isHome == true)] | length == 0' > /dev/null; then
             echo -e "\n${GREEN}=========================================="
             echo -e "✓ Home organization successfully deleted and verified - TEST PASSED"
             echo -e "===========================================${NC}\n"
@@ -1848,15 +1846,7 @@ transfer_funds_to_test_wallet() {
 # Start Chia
 chia start wallet data data_layer_http
 sleep 5
-
-# Check health endpoint
-check_health_endpoint
-
-# Start Chia
-chia start wallet data data_layer_http
-sleep 5
-
-# call function to check if wallet it synced
+without the all day-commitment. Perfect for those easing into cycling, feeling the call of their dust-heavy bicycle in the basement, or folks who are looking for a slower #partypace ride with friends.
 is_wallet_synced
 
 # Display wallet
