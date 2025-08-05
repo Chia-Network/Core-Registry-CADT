@@ -1846,7 +1846,6 @@ transfer_funds_to_test_wallet() {
 # Start Chia
 chia start wallet data data_layer_http
 sleep 5
-without the all day-commitment. Perfect for those easing into cycling, feeling the call of their dust-heavy bicycle in the basement, or folks who are looking for a slower #partypace ride with friends.
 is_wallet_synced
 
 # Display wallet
