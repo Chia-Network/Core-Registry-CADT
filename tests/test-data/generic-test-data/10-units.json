@@ -1,0 +1,308 @@
+[
+  {
+    "projectLocationId": "GTD001-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 1",
+    "countryJurisdictionOfOwner": "United States of America",
+    "inCountryJurisdictionOfOwner": "California",
+    "vintageYear": 2024,
+    "unitType": "Removal - nature",
+    "unitStatus": "Held",
+    "unitBlockStart": "GTD001-001",
+    "unitBlockEnd": "GTD001-100",
+    "unitCount": 100,
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit1",
+    "correspondingAdjustmentDeclaration": "Unknown",
+    "correspondingAdjustmentStatus": "Not Started",
+    "issuance": {
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Verification Approach 1",
+      "verificationBody": "SCS Global Services",
+      "verificationReportDate": "2024-12-15T00:00:00.000Z"
+    }
+  },
+  {
+    "projectLocationId": "GTD002-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 2",
+    "countryJurisdictionOfOwner": "India",
+    "inCountryJurisdictionOfOwner": "Karnataka",
+    "vintageYear": 2024,
+    "unitType": "Reduction - technical",
+    "unitStatus": "Retired",
+    "unitStatusReason": "Retirement for Person or Organization",
+    "unitBlockStart": "GTD002-001",
+    "unitBlockEnd": "GTD002-500",
+    "unitCount": 500,
+    "marketplace": "Generic Testing Data Marketplace",
+    "marketplaceLink": "https://generic-testing-data.org/marketplace",
+    "marketplaceIdentifier": "GTD-MKT-001",
+    "unitTags": "Generic Testing Data, Energy efficiency, Sustainable practices",
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit2",
+    "correspondingAdjustmentDeclaration": "Committed",
+    "correspondingAdjustmentStatus": "Completed",
+    "issuance": {
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Verification Approach",
+      "verificationBody": "TÜV SÜD South Asia Private Limited",
+      "verificationReportDate": "2024-12-15T00:00:00.000Z"
+    },
+    "labels": [
+      {
+        "label": "Generic Testing Data Unit Certification",
+        "labelType": "Certification",
+        "creditingPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "creditingPeriodEndDate": "2029-12-31T23:59:59.000Z",
+        "validityPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "validityPeriodEndDate": "2034-12-31T23:59:59.000Z",
+        "unitQuantity": 500,
+        "labelLink": "https://generic-testing-data.org/labels/unit-cert"
+      }
+    ]
+  },
+  {
+    "projectLocationId": "GTD003-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 3",
+    "countryJurisdictionOfOwner": "Brazil",
+    "inCountryJurisdictionOfOwner": "Amazonas",
+    "vintageYear": 2023,
+    "unitType": "Removal - nature",
+    "unitStatus": "Buffer",
+    "unitBlockStart": "GTD003-001",
+    "unitBlockEnd": "GTD003-250",
+    "unitCount": 250,
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit3",
+    "correspondingAdjustmentDeclaration": "Not Required",
+    "correspondingAdjustmentStatus": "Not Applicable",
+    "issuance": {
+      "startDate": "2023-01-01T00:00:00.000Z",
+      "endDate": "2023-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Forestry Verification",
+      "verificationBody": "First Environment, Inc.",
+      "verificationReportDate": "2023-12-20T00:00:00.000Z"
+    }
+  },
+  {
+    "projectLocationId": "GTD004-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 4",
+    "countryJurisdictionOfOwner": "United States of America",
+    "inCountryJurisdictionOfOwner": "California",
+    "vintageYear": 2023,
+    "unitType": "Reduction - technical",
+    "unitStatus": "Retired",
+    "unitStatusReason": "Retirement for Person or Organization",
+    "unitBlockStart": "GTD004-001",
+    "unitBlockEnd": "GTD004-1000",
+    "unitCount": 1000,
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit4",
+    "correspondingAdjustmentDeclaration": "Committed",
+    "correspondingAdjustmentStatus": "Completed",
+    "issuance": {
+      "startDate": "2020-01-01T00:00:00.000Z",
+      "endDate": "2023-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Final Verification",
+      "verificationBody": "GHD Limited",
+      "verificationReportDate": "2023-12-20T00:00:00.000Z"
+    },
+    "labels": [
+      {
+        "label": "Generic Testing Data Completion Certificate",
+        "labelType": "Certification",
+        "creditingPeriodStartDate": "2020-01-01T00:00:00.000Z",
+        "creditingPeriodEndDate": "2023-12-31T23:59:59.000Z",
+        "validityPeriodStartDate": "2020-01-01T00:00:00.000Z",
+        "validityPeriodEndDate": "2023-12-31T23:59:59.000Z",
+        "unitQuantity": 1000,
+        "labelLink": "https://generic-testing-data.org/labels/completion"
+      }
+    ]
+  },
+  {
+    "projectLocationId": "GTD005-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 5",
+    "countryJurisdictionOfOwner": "Germany",
+    "inCountryJurisdictionOfOwner": "Bavaria",
+    "vintageYear": 2024,
+    "unitType": "Reduction - technical",
+    "unitStatus": "Held",
+    "unitBlockStart": "GTD005-001",
+    "unitBlockEnd": "GTD005-2000",
+    "unitCount": 2000,
+    "marketplace": "Generic Testing Data European Marketplace",
+    "marketplaceLink": "https://generic-testing-data.org/marketplace/eu",
+    "marketplaceIdentifier": "GTD-EU-MKT-001",
+    "unitTags": "Generic Testing Data, Energy efficiency, Renewable energy",
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit5",
+    "correspondingAdjustmentDeclaration": "Unknown",
+    "correspondingAdjustmentStatus": "Pending",
+    "issuance": {
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Renewable Verification",
+      "verificationBody": "TÜV Nord Cert GmbH",
+      "verificationReportDate": "2024-12-20T00:00:00.000Z"
+    }
+  },
+  {
+    "projectLocationId": "GTD006-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 6",
+    "countryJurisdictionOfOwner": "Singapore",
+    "inCountryJurisdictionOfOwner": "Central",
+    "vintageYear": 2024,
+    "unitType": "Removal - nature",
+    "unitStatus": "Held",
+    "unitBlockStart": "GTD006-001",
+    "unitBlockEnd": "GTD006-800",
+    "unitCount": 800,
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit6",
+    "correspondingAdjustmentDeclaration": "Committed",
+    "correspondingAdjustmentStatus": "Not Started",
+    "issuance": {
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Urban Verification",
+      "verificationBody": "KPMG International Limited",
+      "verificationReportDate": "2024-12-20T00:00:00.000Z"
+    },
+    "labels": [
+      {
+        "label": "Generic Testing Data Urban Certification",
+        "labelType": "Certification",
+        "creditingPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "creditingPeriodEndDate": "2033-12-31T23:59:59.000Z",
+        "validityPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "validityPeriodEndDate": "2038-12-31T23:59:59.000Z",
+        "unitQuantity": 800,
+        "labelLink": "https://generic-testing-data.org/labels/urban"
+      }
+    ]
+  },
+  {
+    "projectLocationId": "GTD007-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 7",
+    "countryJurisdictionOfOwner": "Kenya",
+    "inCountryJurisdictionOfOwner": "Central",
+    "vintageYear": 2024,
+    "unitType": "Removal - nature",
+    "unitStatus": "Pending Export",
+    "unitBlockStart": "GTD007-001",
+    "unitBlockEnd": "GTD007-150",
+    "unitCount": 150,
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit7",
+    "correspondingAdjustmentDeclaration": "Unknown",
+    "correspondingAdjustmentStatus": "Not Started",
+    "issuance": {
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Soil Verification",
+      "verificationBody": "Rainforest Alliance, Inc.",
+      "verificationReportDate": "2024-12-20T00:00:00.000Z"
+    }
+  },
+  {
+    "projectLocationId": "GTD008-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 8",
+    "countryJurisdictionOfOwner": "Switzerland",
+    "inCountryJurisdictionOfOwner": "Alpine",
+    "vintageYear": 2024,
+    "unitType": "Removal - nature",
+    "unitStatus": "Held",
+    "unitBlockStart": "GTD008-001",
+    "unitBlockEnd": "GTD008-300",
+    "unitCount": 300,
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit8",
+    "correspondingAdjustmentDeclaration": "Committed",
+    "correspondingAdjustmentStatus": "Not Started",
+    "issuance": {
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Alpine Verification",
+      "verificationBody": "SQS (The Swiss Association for Quality and Management Systems)",
+      "verificationReportDate": "2024-12-20T00:00:00.000Z"
+    },
+    "labels": [
+      {
+        "label": "Generic Testing Data Alpine Certification",
+        "labelType": "Certification",
+        "creditingPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "creditingPeriodEndDate": "2033-12-31T23:59:59.000Z",
+        "validityPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "validityPeriodEndDate": "2038-12-31T23:59:59.000Z",
+        "unitQuantity": 300,
+        "labelLink": "https://generic-testing-data.org/labels/alpine"
+      }
+    ]
+  },
+  {
+    "projectLocationId": "GTD009-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 9",
+    "countryJurisdictionOfOwner": "Sweden",
+    "inCountryJurisdictionOfOwner": "Northern",
+    "vintageYear": 2024,
+    "unitType": "Reduction - technical",
+    "unitStatus": "Held",
+    "unitBlockStart": "GTD009-001",
+    "unitBlockEnd": "GTD009-1200",
+    "unitCount": 1200,
+    "marketplace": "Generic Testing Data Nordic Marketplace",
+    "marketplaceLink": "https://generic-testing-data.org/marketplace/nordic",
+    "marketplaceIdentifier": "GTD-NORDIC-MKT-001",
+    "unitTags": "Generic Testing Data, Wind energy, Renewable energy",
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit9",
+    "correspondingAdjustmentDeclaration": "Committed",
+    "correspondingAdjustmentStatus": "Pending",
+    "issuance": {
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Nordic Verification",
+      "verificationBody": "Det Norske Veritas (U.S.A.), Inc.",
+      "verificationReportDate": "2024-12-20T00:00:00.000Z"
+    },
+    "labels": [
+      {
+        "label": "Generic Testing Data Nordic Certification",
+        "labelType": "Certification",
+        "creditingPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "creditingPeriodEndDate": "2033-12-31T23:59:59.000Z",
+        "validityPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "validityPeriodEndDate": "2038-12-31T23:59:59.000Z",
+        "unitQuantity": 1200,
+        "labelLink": "https://generic-testing-data.org/labels/nordic"
+      }
+    ]
+  },
+  {
+    "projectLocationId": "GTD010-LOC-001",
+    "unitOwner": "Generic Testing Data Owner 10",
+    "countryJurisdictionOfOwner": "Chile",
+    "inCountryJurisdictionOfOwner": "Patagonia",
+    "vintageYear": 2024,
+    "unitType": "Removal - nature",
+    "unitStatus": "Held",
+    "unitBlockStart": "GTD010-001",
+    "unitBlockEnd": "GTD010-500",
+    "unitCount": 500,
+    "unitRegistryLink": "https://generic-testing-data.org/registry/unit10",
+    "correspondingAdjustmentDeclaration": "Not Required",
+    "correspondingAdjustmentStatus": "Not Applicable",
+    "issuance": {
+      "startDate": "2024-01-01T00:00:00.000Z",
+      "endDate": "2024-12-31T23:59:59.000Z",
+      "verificationApproach": "Generic Testing Data Patagonian Verification",
+      "verificationBody": "Ruby Canyon Environmental, Inc",
+      "verificationReportDate": "2024-12-20T00:00:00.000Z"
+    },
+    "labels": [
+      {
+        "label": "Generic Testing Data Patagonian Certification",
+        "labelType": "Certification",
+        "creditingPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "creditingPeriodEndDate": "2033-12-31T23:59:59.000Z",
+        "validityPeriodStartDate": "2024-01-01T00:00:00.000Z",
+        "validityPeriodEndDate": "2038-12-31T23:59:59.000Z",
+        "unitQuantity": 500,
+        "labelLink": "https://generic-testing-data.org/labels/patagonian"
+      }
+    ]
+  }
+]
