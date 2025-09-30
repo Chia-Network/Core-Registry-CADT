@@ -80,7 +80,7 @@
     "@commitlint/config-conventional": "^19.8.1",
     "@yao-pkg/pkg": "^6.5.1",
     "babel-plugin-module-resolver": "^5.0.2",
-    "chai": "5.2.0",
+    "chai": "6.2.0",
     "chai-http": "^5.1.2",
     "eslint": "^9.29.0",
     "eslint-plugin-es": "^4.1.0",
