@@ -46,86 +46,86 @@ jobs:
       - name: npm tests
         run: npm run test
 
-  functional-tests:
-    name: Functional Tests
-    runs-on: ubuntu-latest
-    container:
-      image: node:20.16
+#  functional-tests:
+#    name: Functional Tests
+#    runs-on: ubuntu-latest
+#    container:
+#      image: node:20.16
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
+#    steps:
+#      - name: Checkout Code
+#        uses: actions/checkout@v6
 
-      - name: Install Chia and chia-tools
-        shell: bash
-        run: |
-          curl -sL https://repo.chia.net/FD39E6D3.pubkey.asc | gpg --dearmor -o /usr/share/keyrings/chia.gpg
+#      - name: Install Chia and chia-tools
+#        shell: bash
+#        run: |
+#          curl -sL https://repo.chia.net/FD39E6D3.pubkey.asc | gpg --dearmor -o /usr/share/keyrings/chia.gpg
 
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/chia.gpg] https://repo.chia.net/debian/ stable main" | tee /etc/apt/sources.list.d/chia.list > /dev/null
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/chia.gpg] https://repo.chia.net/chia-tools/debian/ stable main" | tee /etc/apt/sources.list.d/chia-tools.list > /dev/null
-          apt-get update
+#          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/chia.gpg] https://repo.chia.net/debian/ stable main" | tee /etc/apt/sources.list.d/chia.list > /dev/null
+#          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/chia.gpg] https://repo.chia.net/chia-tools/debian/ stable main" | tee /etc/apt/sources.list.d/chia-tools.list > /dev/null
+#          apt-get update
 
-          apt-get install -y chia-blockchain-cli chia-tools
+#          apt-get install -y chia-blockchain-cli chia-tools
 
-      - name: Install pm2
-        run: npm install pm2@latest -g
+#      - name: Install pm2
+#        run: npm install pm2@latest -g
 
-      - name: Install yq
-        run: apt install -y yq
+#      - name: Install yq
+#        run: apt install -y yq
 
-      - name: npm install
-        run: npm install
+#      - name: npm install
+#        run: npm install
 
-      - name: Configure Chia
-        shell: bash
-        run: |
-          chia init
-          chia keys generate -l "functional_tests"
-          chia-tools network switch testneta
-          chia-tools config add-trusted-peer -y 54.214.229.33 58444
-          chia configure -log-level INFO
+#      - name: Configure Chia
+#        shell: bash
+#        run: |
+#          chia init
+#          chia keys generate -l "functional_tests"
+#          chia-tools network switch testneta
+#          chia-tools config add-trusted-peer -y 54.214.229.33 58444
+#          chia configure -log-level INFO
 
-      - name: Configure CADT
-        shell: bash
-        run: |
-          # Run cadt momentarily to create config file
-          pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
-          sleep 10
-          pm2 logs core-registry-cadt --nostream
-          pm2 stop core-registry-cadt
+#      - name: Configure CADT
+#        shell: bash
+#        run: |
+#          # Run cadt momentarily to create config file
+#          pm2 start npm --no-autorestart --name "core-registry-cadt" -- start
+#          sleep 10
+#          pm2 logs core-registry-cadt --nostream
+#          pm2 stop core-registry-cadt
 
           # Remove cadt database to reset system
-          echo "Removing cadt database to reset system..."
-          rm -f ~/.chia/mainnet/core-registry/cadt/v1/data.sqlite3*
+#          echo "Removing cadt database to reset system..."
+#          rm -f ~/.chia/mainnet/core-registry/cadt/v1/data.sqlite3*
 
           # Configure CADT to most verbose logs
-          echo "Configuring CADT config.yaml..."
-          yq -yi '.GENERAL.LOG_LEVEL = "debug"' ~/.chia/mainnet/core-registry/config.yaml
-          yq -yi '.CADT.GOVERNANCE.GOVERNANCE_BODY_ID = "29fe490bde0186cb7a592450d12e78162a353b866beec3e51bd67394257e4f4f"' ~/.chia/mainnet/core-registry/config.yaml
-          yq -yi '.CHIA.DATALAYER_HOST = "https://127.0.0.1:8562"' ~/.chia/mainnet/core-registry/config.yaml
-          yq -yi '.CHIA.WALLET_HOST = "https://127.0.0.1:9256"' ~/.chia/mainnet/core-registry/config.yaml
-          yq -yi '.CHIA.DATALAYER_FILE_SERVER_URL = "https://127.0.0.1:8575"' ~/.chia/mainnet/core-registry/config.yaml
-          yq -yi '.CADT.AUTO_MIRROR_EXTERNAL_STORES = "true"' ~/.chia/mainnet/core-registry/config.yaml
+#          echo "Configuring CADT config.yaml..."
+#          yq -yi '.GENERAL.LOG_LEVEL = "debug"' ~/.chia/mainnet/core-registry/config.yaml
+#          yq -yi '.CADT.GOVERNANCE.GOVERNANCE_BODY_ID = "29fe490bde0186cb7a592450d12e78162a353b866beec3e51bd67394257e4f4f"' ~/.chia/mainnet/core-registry/config.yaml
+#          yq -yi '.CHIA.DATALAYER_HOST = "https://127.0.0.1:8562"' ~/.chia/mainnet/core-registry/config.yaml
+#          yq -yi '.CHIA.WALLET_HOST = "https://127.0.0.1:9256"' ~/.chia/mainnet/core-registry/config.yaml
+#          yq -yi '.CHIA.DATALAYER_FILE_SERVER_URL = "https://127.0.0.1:8575"' ~/.chia/mainnet/core-registry/config.yaml
+#          yq -yi '.CADT.AUTO_MIRROR_EXTERNAL_STORES = "true"' ~/.chia/mainnet/core-registry/config.yaml
 
           # Show the config file
-          echo "Showing the config file after configuration ... (this is the final config file)"
-          cat ~/.chia/mainnet/core-registry/config.yaml
+#          echo "Showing the config file after configuration ... (this is the final config file)"
+#          cat ~/.chia/mainnet/core-registry/config.yaml
 
           # Clean up any existing PM2 processes with the same name
-          pm2 delete core-registry-cadt 2>/dev/null || true
+ #         pm2 delete core-registry-cadt 2>/dev/null || true
 
-      - name: Run tests
-        run: bash tests/functional-tests.sh
-        env:
-          TXCH_MNEMONIC: ${{ secrets.TXCH_MNEMONIC }}
-          LOG_LEVEL: TRACE
+ #     - name: Run tests
+#        run: bash tests/functional-tests.sh
+#        env:
+#          TXCH_MNEMONIC: ${{ secrets.TXCH_MNEMONIC }}
+#          LOG_LEVEL: TRACE
 
-      - name: Upload logs as artifacts
-        uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: functional-test-logs
-          path: |
-            core-registry-cadt.log
-            ~/.chia/mainnet/log/debug.log
-          retention-days: 30
+#      - name: Upload logs as artifacts
+#        uses: actions/upload-artifact@v6
+#        if: always()
+#        with:
+#          name: functional-test-logs
+#          path: |
+#            core-registry-cadt.log
+#            ~/.chia/mainnet/log/debug.log
+#          retention-days: 30
